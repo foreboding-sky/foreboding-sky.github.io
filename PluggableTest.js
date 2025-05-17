@@ -45,13 +45,37 @@ define(function (require) {
                 return;
             }
 
-            const orderId = vm.selectedOrders[0];
-            console.log(vm.selectedOrders[0]);
+            const loadImageFromUrl = (url) => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = function () {
+                        resolve({
+                            url,
+                            image: img,
+                            width: img.width,
+                            height: img.height
+                        });
+                    };
+                    img.onerror = function () {
+                        reject(new Error(`Failed to load image from ${url}`));
+                    };
+                    img.src = url;
+                });
+            };
 
-            const labelUrl = `${baseUrl}consignments/${orderId}/labels`;
+            const labelUrls = vm.selectedOrders.map((id) => `${baseUrl}consignments/${id}/labels`);
 
-            window.open(labelUrl, '_blank');
+            Promise.all(labelUrls.map(loadImageFromUrl))
+                .then((images) => {
+                    vm.labelImages = images;
+                    console.log("Loaded label images:", images);
+                })
+                .catch((error) => {
+                    Core.Dialogs.addNotify(error.message, 'ERROR');
+                });
         };
+
     };
 
     placeholderManager.register('OpenOrders_OrderControlButtons', placeHolder);
