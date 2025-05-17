@@ -15,8 +15,8 @@ define(function (require) {
 
         vm.getItems = () => [
             {
-                key: 'placeholderPrintLabel',
-                text: 'Print shipping label',
+                key: 'placeholderTestPallexAndrii',
+                text: 'TestPallexAndrii',
                 icon: 'fa func fa-print'
             }
         ];
