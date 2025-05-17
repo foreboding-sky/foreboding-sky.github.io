@@ -1,57 +1,58 @@
-"use strict";
+'use strict';
 
 define(function (require) {
-    const placeholderManager = require("core/placeholderManager");
+    const placeholderManager = require('core/placeholderManager');
 
-    const isTest = true;
+    const placeHolder = function ($scope, $element, $http) {
+        const vm = this;
+        vm.ordersService = new Services.OrdersService(vm);
+        vm.selectedOrders = [];
 
-    const PallExTestUrl = "https://s-nexus-rest-api-test.pallex.com/v1/";
-    const PallExUrl = "https://rest-api-nexus.pallex.com/v1/";
+        const isTest = true;
+        const PallExTestUrl = 'https://s-nexus-rest-api-test.pallex.com/v1/';
+        const PallExUrl = 'https://rest-api-nexus.pallex.com/v1/';
+        const baseUrl = isTest ? PallExTestUrl : PallExUrl;
 
-    const PallExBaseUrl = isTest ? PallExTestUrl : PallExUrl;
-
-    const TestPluggableAndriiButtonKey = "placeholderTestPluggableAndrii";
-
-    var placeHolder = function ($scope, $element, controlService) {
-
-        this.getItems = () => {
-            return [{
-                text: "TestPluggableAndrii",
-                key: TestPluggableAndriiButtonKey,
-                icon: "fa fa-truck"
-            }];
-        };
-
-        this.isEnabled = (itemKey) => {
-            if (itemKey === TestPluggableAndriiButtonKey) {
-                const selected = $scope.viewStats.get_selected_orders?.() || [];
-                return selected.length > 0;
+        vm.getItems = () => [
+            {
+                key: 'placeholderPrintLabel',
+                text: 'Print shipping label',
+                icon: 'fa func fa-print'
             }
-            return false;
-        };
+        ];
 
-        this.onClick = () => {
-            const selectedOrders = $scope.viewStats.get_selected_orders?.() || [];
+        vm.isEnabled = () => false;
 
-            if (selectedOrders.length === 0) {
-                alert("Please select at least one order.");
+        angular.element(document).ready(function () {
+            vm.ordersSelectedWatch = $scope.$watch(
+                () => $scope.viewStats.selected_orders,
+                function (newVal) {
+                    if (newVal && newVal.length) {
+                        vm.isEnabled = () => true;
+                    } else {
+                        vm.isEnabled = () => false;
+                    }
+                },
+                true
+            );
+        });
+
+        vm.onClick = function (itemKey, $event) {
+            vm.selectedOrders = $scope.viewStats.selected_orders.map((i) => i.id);
+
+            if (!vm.selectedOrders.length) {
+                Core.Dialogs.addNotify('No orders selected.', 'WARNING');
                 return;
             }
 
-            const order = selectedOrders[0];
-            console.log(order);
-            const consignmentId = order.id || order.pkOrderId || order.OrderId;
+            const orderId = vm.selectedOrders[0];
+            console.log(vm.selectedOrders[0]);
 
-            if (!consignmentId) {
-                alert("Could not determine consignment ID from selected order.");
-                return;
-            }
+            const labelUrl = `${baseUrl}consignments/${orderId}/labels`;
 
-            const labelUrl = `${PallExBaseUrl}consignments/${consignmentId}/labels`;
-
-            window.open(labelUrl, "_blank");
+            window.open(labelUrl, '_blank');
         };
     };
 
-    placeholderManager.register("OpenOrders_OrderControlButtons", placeHolder);
+    placeholderManager.register('OpenOrders_OrderControlButtons', placeHolder);
 });
