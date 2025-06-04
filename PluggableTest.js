@@ -101,48 +101,25 @@ define(function (require) {
                 }
 
                 for (let i = 0; i < documents.length; i++) {
-                    for (let j = 0; j < documents[i].Labels.length; j++) {
-                        let packageLabels = documents[i].Labels[j];
+                    let packageLabel = documents[i].Label
 
-                        if (!!documents[i].ShippingLabelTemplateBase64) {
-                            let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
-                            let labelPageIndex = 0;
+                    if (!!documents[i].ShippingLabelTemplateBase64) {
+                        let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
+                        let labelPageIndex = 0;
+
+                        if (shippingInvoiceDocument.getPageCount() > 1) {
 
                             if (shippingInvoiceDocument.getPageCount() > 1) {
-
-                                if (shippingInvoiceDocument.getPageCount() > 1) {
-                                    labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
-                                } else {
-                                    shippingInvoiceDocument.addPage();
-                                    labelPageIndex = 1;
-                                }
+                                labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
+                            } else {
+                                shippingInvoiceDocument.addPage();
+                                labelPageIndex = 1;
                             }
-
-                            shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabels.LabelBase64, labelPageIndex, 0, 20, 550, 305);
-                            let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
-                            shipingPages.forEach(page => resultDocument.addPage(page));
                         }
 
-                        if (!!documents[i].ReturnLabelTemplateBase64) {
-                            let returnInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ReturnLabelTemplateBase64);
-
-                            let returnLabelPageIndex = 0;
-
-                            if (returnInvoiceDocument.getPageCount() > 1) {
-                                if (returnInvoiceDocument.getPageCount() > 1) {
-                                    returnLabelPageIndex = returnInvoiceDocument.getPageCount() - 1;
-                                } else {
-                                    returnInvoiceDocument.addPage();
-                                    returnLabelPageIndex = 1;
-                                }
-                            }
-
-                            if (!!packageLabels.ReturnLabelBase64) {
-                                returnInvoiceDocument = await addImageToPdfFitInBox(returnInvoiceDocument, packageLabels.ReturnLabelBase64, returnLabelPageIndex, 0, 20, 550, 305);
-                            }
-                            let returnPages = await resultDocument.copyPages(returnInvoiceDocument, getDocumentIndices(returnInvoiceDocument));
-                            returnPages.forEach(page => resultDocument.addPage(page));
-                        }
+                        shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabel, labelPageIndex, 0, 20, 550, 305);
+                        let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
+                        shipingPages.forEach(page => resultDocument.addPage(page));
                     }
                 }
 
