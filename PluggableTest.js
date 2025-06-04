@@ -16,7 +16,7 @@ define(function (require) {
 
         vm.getItems = () => ([{
             key: vm.buttonPlaceholderKey,
-            text: "Print shipping documents",
+            text: "TestAndrii",
             icon: "fa-print"
         }]);
 
@@ -56,6 +56,7 @@ define(function (require) {
         vm.loadFilesAndPrint = async (documents, allOrderIds, pageNumber, totalPages) => {
             let orderIds = paginate(allOrderIds, 4, pageNumber);
             vm.macroService.Run({ applicationName: "PluggableTestAndrii", macroName: "PallExLabels", orderIds }, async function (result) {
+                console.log(result);
                 if (!result.error) {
                     if (result.result.IsError) {
                         Core.Dialogs.addNotify({ message: result.result.ErrorMessage, type: "ERROR", timeout: 5000 });
@@ -65,7 +66,6 @@ define(function (require) {
                         vm.setLoading(false);
                         return;
                     };
-                    console.log(result.result);
                     documents = documents.concat(result.result.OrderLabels);
                     if (result.result.OrderIdsLeft && result.result.OrderIdsLeft.length > 0) {
                         allOrderIds = allOrderIds.concat(result.result.OrderIdsLeft);
