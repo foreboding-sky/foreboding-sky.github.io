@@ -65,6 +65,7 @@ define(function (require) {
                         vm.setLoading(false);
                         return;
                     };
+                    console.log(result.result);
                     documents = documents.concat(result.result.OrderLabels);
                     if (result.result.OrderIdsLeft && result.result.OrderIdsLeft.length > 0) {
                         allOrderIds = allOrderIds.concat(result.result.OrderIdsLeft);
