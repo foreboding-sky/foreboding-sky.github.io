@@ -54,6 +54,8 @@ define(function (require) {
         };
 
         vm.loadFilesAndPrint = async (documents, allOrderIds, pageNumber, totalPages) => {
+            console.log("loadFilesAndPrint");
+            console.log(allOrderIds);
             let orderIds = paginate(allOrderIds, 4, pageNumber);
             vm.macroService.Run({ applicationName: "PluggableTestAndrii", macroName: "PallExLabels", orderIds }, async function (result) {
                 console.log(result);
@@ -88,6 +90,7 @@ define(function (require) {
         };
 
         vm.addLabelsAndPrint = async (documents) => {
+            console.log("addLabelsAndPrint");
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
                 console.log(documents);
