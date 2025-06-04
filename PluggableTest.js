@@ -90,7 +90,7 @@ define(function (require) {
         vm.addLabelsAndPrint = async (documents) => {
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
-
+                console.log(documents);
                 if (documents.length === 0) {
                     Core.Dialogs.addNotify({ message: "No orders found to print.", type: "ERROR", timeout: 5000 });
                     vm.setLoading(false);
