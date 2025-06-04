@@ -185,6 +185,8 @@ define(function (require) {
             contentType = contentType || '';
             const sliceSize = 512;
             const byteCharacters = window.atob(content);
+            console.log(content);
+            console.log(byteCharacters);
 
             const byteArrays = [];
             for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
