@@ -5,7 +5,6 @@ define(function (require) {
     const pdfLib = require("https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.js");
     const pdfjsLib = require("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js");
 
-
     const TestPluggableAndriiButtonKey = "placeholderTestPluggableAndrii";
 
     var placeHolder = function ($scope, $element, controlService) {
@@ -103,24 +102,26 @@ define(function (require) {
                 }
 
                 for (let i = 0; i < documents.length; i++) {
-                    //let packageLabel = documents[i].Label
-                    let packageLabel = await convertPdfPageToPngBase64(documents[i].Label);
+                    let packageLabel = documents[i].Label
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
                         let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
                         let labelPageIndex = 0;
 
                         if (shippingInvoiceDocument.getPageCount() > 1) {
-
-                            if (shippingInvoiceDocument.getPageCount() > 1) {
-                                labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
-                            } else {
-                                shippingInvoiceDocument.addPage();
-                                labelPageIndex = 1;
-                            }
+                            labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
+                        } else {
+                            shippingInvoiceDocument.addPage();
+                            labelPageIndex = 1;
                         }
 
-                        shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabel, labelPageIndex, 0, 20, 550, 305);
+                        if (!!packageLabel) {
+                            let packageLabelPdf = await pdfLib.PDFDocument.load(packageLabel);
+                            const packageLabelPages = await resultDocument.copyPages(packageLabelPdf, [0]);
+                            packageLabelPages.forEach(page => shippingInvoiceDocument.addPage(page));
+                        }
+
+                        //shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabel, labelPageIndex, 0, 20, 550, 305);
                         let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
                         shipingPages.forEach(page => resultDocument.addPage(page));
                     }
@@ -206,28 +207,6 @@ define(function (require) {
             });
             return blob;
         };
-
-        async function convertPdfPageToPngBase64(pdfBase64, pageIndex = 0) {
-            const pdfData = atob(pdfBase64);
-            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array([...pdfData].map(c => c.charCodeAt(0))) });
-            const pdf = await loadingTask.promise;
-            const page = await pdf.getPage(pageIndex + 1);
-
-            const viewport = page.getViewport({ scale: 2.0 });
-            const canvas = document.createElement("canvas");
-            const context = canvas.getContext("2d");
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            await page.render(renderContext).promise;
-
-            return canvas.toDataURL("image/png").split(",")[1];
-        }
-
 
         function printPDFInNewWindow(pdfBase64) {
             const blob = b64toBlob(pdfBase64, "application/pdf");
