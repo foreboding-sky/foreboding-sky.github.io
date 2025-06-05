@@ -92,6 +92,7 @@ define(function (require) {
 
         vm.addLabelsAndPrint = async (documents) => {
             console.log("addLabelsAndPrint");
+            console.log(pdfjsLib);
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
                 console.log(documents);
@@ -105,7 +106,9 @@ define(function (require) {
                     let packageLabel = documents[i].Label
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
-                        let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
+                        const shippingInvoiceDocumentString = documents[i].Label.replace(/^data:application\/pdf;base64,/, '');
+                        const shippingInvoiceDocumentBytes = base64ToUint8Array(shippingInvoiceDocumentString);
+                        let shippingInvoiceDocument = await pdfLib.PDFDocument.load(shippingInvoiceDocumentBytes);
                         let labelPageIndex = 0;
 
                         if (shippingInvoiceDocument.getPageCount() > 1) {
@@ -116,7 +119,9 @@ define(function (require) {
                         }
 
                         if (!!packageLabel) {
-                            let packageLabelPdf = await pdfLib.PDFDocument.load(packageLabel);
+                            const packageLabelString = documents[i].Label.replace(/^data:application\/pdf;base64,/, '');
+                            const packageLabelBytes = base64ToUint8Array(packageLabelString);
+                            let packageLabelPdf = await pdfLib.PDFDocument.load(packageLabelBytes);
                             const packageLabelPages = await resultDocument.copyPages(packageLabelPdf, [0]);
                             packageLabelPages.forEach(page => shippingInvoiceDocument.addPage(page));
                         }
@@ -184,6 +189,16 @@ define(function (require) {
             }
             return arr;
         }
+
+        function base64ToUint8Array(base64) {
+            const raw = atob(base64);
+            const uint8Array = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) {
+                uint8Array[i] = raw.charCodeAt(i);
+            }
+            return uint8Array;
+        }
+
 
         function b64toBlob(content, contentType) {
             contentType = contentType || '';
