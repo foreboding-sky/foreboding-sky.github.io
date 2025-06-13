@@ -117,7 +117,14 @@ define(function (require) {
                             }
                         }
 
-                        shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabel, labelPageIndex, 0, 20, 550, 305);
+                        // Convert PDF to PNG before adding to shipping invoice
+                        const pngImages = await convertPdfToPng(packageLabel);
+                        if (pngImages && pngImages.length > 0) {
+                            // Use the first PNG image (assuming single page PDF)
+                            const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
+                            shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
+                        }
+
                         let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
                         shipingPages.forEach(page => resultDocument.addPage(page));
                     }
@@ -133,6 +140,28 @@ define(function (require) {
                 vm.setLoading(false);
             }
         };
+
+        async function convertPdfToPng(pdfBase64) {
+            try {
+                const response = await fetch('https://macro-functionality-extender.brainence.info/api/convert/Base64PdfToPng', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pdfBase64 })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const pngImages = await response.json();
+                return pngImages;
+            } catch (error) {
+                console.error('Error converting PDF to PNG:', error);
+                throw error;
+            }
+        }
 
         async function addImageToPdfFitInBox(pdfDocument, pngImageBase64, pageNumber, boxX, boxY, boxWidth, boxHeight) {
             let embeddedImage = await pdfDocument.embedPng(pngImageBase64);
