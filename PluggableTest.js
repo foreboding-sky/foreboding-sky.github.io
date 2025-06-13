@@ -166,7 +166,7 @@ define(function (require) {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ pdfBase64 })
+                    body: JSON.stringify({ Base64Pdf: pdfBase64 })
                 });
 
                 if (!response.ok) {
