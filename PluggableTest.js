@@ -126,6 +126,7 @@ define(function (require) {
                                 : packageLabel;
 
                             console.log("PDF data length:", pdfData.length);
+                            console.log("PDF base64 data:", pdfData);
                             const pngImages = await convertPdfToPng(pdfData);
 
                             if (pngImages && pngImages.length > 0) {
