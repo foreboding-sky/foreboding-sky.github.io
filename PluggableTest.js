@@ -3,7 +3,6 @@
 define(function (require) {
     const placeholderManager = require("core/placeholderManager");
     const pdfLib = require("https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.js");
-    const pdfjsLib = require("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js");
 
     const TestPluggableAndriiButtonKey = "placeholderTestPluggableAndrii";
 
@@ -92,7 +91,6 @@ define(function (require) {
 
         vm.addLabelsAndPrint = async (documents) => {
             console.log("addLabelsAndPrint");
-            console.log(pdfjsLib);
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
                 console.log(documents);
@@ -106,27 +104,27 @@ define(function (require) {
                     let packageLabel = documents[i].Label
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
-                        const shippingInvoiceDocumentString = documents[i].Label.replace(/^data:application\/pdf;base64,/, '');
-                        const shippingInvoiceDocumentBytes = base64ToUint8Array(shippingInvoiceDocumentString);
-                        let shippingInvoiceDocument = await pdfLib.PDFDocument.load(shippingInvoiceDocumentBytes);
+                        let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
                         let labelPageIndex = 0;
 
                         if (shippingInvoiceDocument.getPageCount() > 1) {
-                            labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
-                        } else {
-                            shippingInvoiceDocument.addPage();
-                            labelPageIndex = 1;
+
+                            if (shippingInvoiceDocument.getPageCount() > 1) {
+                                labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
+                            } else {
+                                shippingInvoiceDocument.addPage();
+                                labelPageIndex = 1;
+                            }
                         }
 
-                        if (!!packageLabel) {
-                            const packageLabelString = documents[i].Label.replace(/^data:application\/pdf;base64,/, '');
-                            const packageLabelBytes = base64ToUint8Array(packageLabelString);
-                            let packageLabelPdf = await pdfLib.PDFDocument.load(packageLabelBytes);
-                            const packageLabelPages = await resultDocument.copyPages(packageLabelPdf, [0]);
-                            packageLabelPages.forEach(page => shippingInvoiceDocument.addPage(page));
+                        // Convert PDF to PNG before adding to shipping invoice
+                        const pngImages = await convertPdfToPng(packageLabel);
+                        if (pngImages && pngImages.length > 0) {
+                            // Use the first PNG image (assuming single page PDF)
+                            const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
+                            shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
                         }
 
-                        //shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, packageLabel, labelPageIndex, 0, 20, 550, 305);
                         let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
                         shipingPages.forEach(page => resultDocument.addPage(page));
                     }
@@ -142,6 +140,28 @@ define(function (require) {
                 vm.setLoading(false);
             }
         };
+
+        async function convertPdfToPng(pdfBase64) {
+            try {
+                const response = await fetch('https://macro-functionality-extender.brainence.info/api/convert/Base64PdfToPng', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ pdfBase64 })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const pngImages = await response.json();
+                return pngImages;
+            } catch (error) {
+                console.error('Error converting PDF to PNG:', error);
+                throw error;
+            }
+        }
 
         async function addImageToPdfFitInBox(pdfDocument, pngImageBase64, pageNumber, boxX, boxY, boxWidth, boxHeight) {
             let embeddedImage = await pdfDocument.embedPng(pngImageBase64);
@@ -190,20 +210,12 @@ define(function (require) {
             return arr;
         }
 
-        function base64ToUint8Array(base64) {
-            const raw = atob(base64);
-            const uint8Array = new Uint8Array(raw.length);
-            for (let i = 0; i < raw.length; i++) {
-                uint8Array[i] = raw.charCodeAt(i);
-            }
-            return uint8Array;
-        }
-
-
         function b64toBlob(content, contentType) {
             contentType = contentType || '';
             const sliceSize = 512;
             const byteCharacters = window.atob(content);
+            console.log(content);
+            console.log(byteCharacters);
 
             const byteArrays = [];
             for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
