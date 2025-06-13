@@ -102,13 +102,14 @@ define(function (require) {
 
                 for (let i = 0; i < documents.length; i++) {
                     let packageLabel = documents[i].Label
+                    console.log("Package Label type:", typeof packageLabel);
+                    console.log("Package Label length:", packageLabel.length);
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
                         let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
                         let labelPageIndex = 0;
 
                         if (shippingInvoiceDocument.getPageCount() > 1) {
-
                             if (shippingInvoiceDocument.getPageCount() > 1) {
                                 labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
                             } else {
@@ -118,11 +119,26 @@ define(function (require) {
                         }
 
                         // Convert PDF to PNG before adding to shipping invoice
-                        const pngImages = await convertPdfToPng(packageLabel);
-                        if (pngImages && pngImages.length > 0) {
-                            // Use the first PNG image (assuming single page PDF)
-                            const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
-                            shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
+                        try {
+                            // Ensure the PDF data is properly formatted
+                            const pdfData = packageLabel.startsWith('data:application/pdf;base64,')
+                                ? packageLabel.split(',')[1]
+                                : packageLabel;
+
+                            console.log("PDF data length:", pdfData.length);
+                            const pngImages = await convertPdfToPng(pdfData);
+
+                            if (pngImages && pngImages.length > 0) {
+                                // Convert the byte array to base64
+                                const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
+                                shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
+                            } else {
+                                console.error("No PNG images returned from conversion");
+                                Core.Dialogs.addNotify({ message: "Failed to convert PDF to PNG", type: "ERROR", timeout: 5000 });
+                            }
+                        } catch (conversionError) {
+                            console.error("Error during PDF to PNG conversion:", conversionError);
+                            Core.Dialogs.addNotify({ message: "Error converting PDF to PNG: " + conversionError.message, type: "ERROR", timeout: 5000 });
                         }
 
                         let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
@@ -136,6 +152,7 @@ define(function (require) {
 
                 vm.setLoading(false);
             } catch (error) {
+                console.error("Error in addLabelsAndPrint:", error);
                 Core.Dialogs.addNotify({ message: error.message, type: "ERROR", timeout: 5000 });
                 vm.setLoading(false);
             }
@@ -143,6 +160,7 @@ define(function (require) {
 
         async function convertPdfToPng(pdfBase64) {
             try {
+                console.log("Converting PDF to PNG, input length:", pdfBase64.length);
                 const response = await fetch('https://macro-functionality-extender.brainence.info/api/convert/Base64PdfToPng', {
                     method: 'POST',
                     headers: {
@@ -152,10 +170,13 @@ define(function (require) {
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error("API Error Response:", errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
                 }
 
                 const pngImages = await response.json();
+                console.log("Received PNG images count:", pngImages.length);
                 return pngImages;
             } catch (error) {
                 console.error('Error converting PDF to PNG:', error);
