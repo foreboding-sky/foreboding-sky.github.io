@@ -132,8 +132,8 @@ define(function (require) {
                                     const pageHeight = page.getHeight();
 
                                     // Calculate dimensions for 2x2 grid
-                                    const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
-                                    const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
+                                    const imageWidth = (pageWidth - 40) / 2; // 20px margin on each side
+                                    const imageHeight = (pageHeight - 40) / 2; // 20px margin top/bottom
 
                                     // Add images in 2x2 grid
                                     // Top left
@@ -141,7 +141,7 @@ define(function (require) {
 
                                     // Top right
                                     if (i + 1 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, pageWidth - imageWidth - 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, pageHeight - imageHeight - 20, imageWidth, imageHeight);
                                     }
 
                                     // Bottom left
@@ -151,7 +151,7 @@ define(function (require) {
 
                                     // Bottom right
                                     if (i + 3 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 3], resultDocument.getPageCount() - 1, pageWidth - imageWidth - 20, 20, imageWidth, imageHeight);
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 3], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, 20, imageWidth, imageHeight);
                                     }
                                 }
                             } else {
