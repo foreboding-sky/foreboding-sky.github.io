@@ -54,11 +54,8 @@ define(function (require) {
         };
 
         vm.loadFilesAndPrint = async (documents, allOrderIds, pageNumber, totalPages) => {
-            console.log("loadFilesAndPrint");
-            console.log(allOrderIds);
             let orderIds = paginate(allOrderIds, 4, pageNumber);
             vm.macroService.Run({ applicationName: "PluggableTestAndrii", macroName: "PallExLabels", orderIds }, async function (result) {
-                console.log(result);
                 if (!result.error) {
                     if (result.result.IsError) {
                         Core.Dialogs.addNotify({ message: result.result.ErrorMessage, type: "ERROR", timeout: 5000 });
@@ -92,7 +89,6 @@ define(function (require) {
         vm.addLabelsAndPrint = async (documents) => {
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
-
                 if (documents.length === 0) {
                     Core.Dialogs.addNotify({ message: "No orders found to print.", type: "ERROR", timeout: 5000 });
                     vm.setLoading(false);
@@ -104,26 +100,48 @@ define(function (require) {
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
                         let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
+                        let labelPageIndex = 0;
 
-                        // Add shipping invoice pages
-                        let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
-                        shipingPages.forEach(page => resultDocument.addPage(page));
-
-                        // Add package label pages if they exist
-                        if (packageLabel) {
-                            const packageLabelPdf = await pdfLib.PDFDocument.load(packageLabel);
-                            const pageCount = packageLabelPdf.getPageCount();
-
-                            for (let i = 0; i < pageCount; i++) {
-                                const [page] = await resultDocument.copyPages(packageLabelPdf, [i]);
-                                resultDocument.addPage(page);
+                        if (shippingInvoiceDocument.getPageCount() > 1) {
+                            if (shippingInvoiceDocument.getPageCount() > 1) {
+                                labelPageIndex = shippingInvoiceDocument.getPageCount() - 1;
+                            } else {
+                                shippingInvoiceDocument.addPage();
+                                labelPageIndex = 1;
                             }
                         }
+
+                        // Convert PDF to PNG before adding to shipping invoice
+                        try {
+                            // Ensure the PDF data is properly formatted
+                            const pdfData = packageLabel.startsWith('data:application/pdf;base64,')
+                                ? packageLabel.split(',')[1]
+                                : packageLabel;
+
+                            const pngImages = await convertPdfToPng(pdfData);
+
+                            if (pngImages && pngImages.length > 0) {
+                                // Convert the byte array to base64
+                                const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
+                                shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
+                            } else {
+                                console.error("No PNG images returned from conversion");
+                                Core.Dialogs.addNotify({ message: "Failed to convert PDF to PNG", type: "ERROR", timeout: 5000 });
+                            }
+                        } catch (conversionError) {
+                            console.error("Error during PDF to PNG conversion:", conversionError);
+                            Core.Dialogs.addNotify({ message: "Error converting PDF to PNG: " + conversionError.message, type: "ERROR", timeout: 5000 });
+                        }
+
+                        let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
+                        shipingPages.forEach(page => resultDocument.addPage(page));
                     }
                 }
 
                 const resultBase64 = await resultDocument.saveAsBase64();
+
                 printPDFInNewWindow(resultBase64);
+
                 vm.setLoading(false);
             } catch (error) {
                 console.error("Error in addLabelsAndPrint:", error);
@@ -132,17 +150,9 @@ define(function (require) {
             }
         };
 
-        function getDocumentIndices(pdfDoc) {
-            let arr = [];
-            for (let i = 0; i < pdfDoc.getPageCount(); i++) {
-                arr.push(i);
-            }
-            return arr;
-        }
-
-        /* Not in use - kept for reference
         async function convertPdfToPng(pdfBase64) {
             try {
+                console.log("Converting PDF to PNG, input length:", pdfBase64.length);
                 const response = await fetch('https://macro-functionality-extender.brainence.info/api/convert/Base64PdfToPng', {
                     method: 'POST',
                     headers: {
@@ -153,17 +163,65 @@ define(function (require) {
 
                 if (!response.ok) {
                     const errorText = await response.text();
+                    console.error("API Error Response:", errorText);
                     throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
                 }
 
                 const pngImages = await response.json();
+                console.log("Received PNG images count:", pngImages.length);
                 return pngImages;
             } catch (error) {
                 console.error('Error converting PDF to PNG:', error);
                 throw error;
             }
         }
-        */
+
+        async function addImageToPdfFitInBox(pdfDocument, pngImageBase64, pageNumber, boxX, boxY, boxWidth, boxHeight) {
+            let embeddedImage = await pdfDocument.embedPng(pngImageBase64);
+            const { width: imageWidth, height: imageHeight } = embeddedImage.size();
+
+            let [newImageWidth, newImageHeight] = reduceSizeWithProportion(imageWidth, imageHeight, boxHeight, boxWidth);
+
+            let labelPage = pdfDocument.getPages()[pageNumber];
+
+            let pageSize = labelPage.getSize();
+
+            boxX = (pageSize.width - (pageSize.width - boxWidth));
+
+            labelPage.drawImage(embeddedImage, {
+                x: boxX,
+                y: boxY,
+                width: newImageWidth,
+                height: newImageHeight,
+                rotate: pdfLib.degrees(90)
+            });
+
+            return pdfDocument;
+        }
+
+        function reduceSizeWithProportion(width, height, maxWidth, maxHeight) {
+            if (width > maxWidth) {
+                let reduceCoef = maxWidth / width;
+                width *= reduceCoef;
+                height *= reduceCoef;
+                return reduceSizeWithProportion(width, height, maxWidth, maxHeight);
+            }
+            if (height > maxHeight) {
+                let reduceCoef = maxHeight / height;
+                width *= reduceCoef;
+                height *= reduceCoef;
+                return reduceSizeWithProportion(width, height, maxWidth, maxHeight);
+            }
+            return [width, height];
+        }
+
+        function getDocumentIndices(pdfDoc) {
+            let arr = [];
+            for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+                arr.push(i);
+            }
+            return arr;
+        }
 
         function b64toBlob(content, contentType) {
             contentType = contentType || '';
