@@ -260,18 +260,36 @@ define(function (require) {
         };
 
         function printPDFInNewWindow(pdfBase64) {
-            const blob = b64toBlob(pdfBase64, "application/pdf");
-            const blobURL = URL.createObjectURL(blob);
-            let popup = window.open(blobURL, "", "width=1,height=1,scrollbars=no,resizable=no,toolbar=no,menubar=0,status=no,directories=0,visible=none");
+            try {
+                const blob = b64toBlob(pdfBase64, "application/pdf");
+                const blobURL = URL.createObjectURL(blob);
 
-            if (popup == null) {
-                Core.Dialogs.addNotify({ message: "Cannot open window for print", type: "ERROR", timeout: 5000 });
+                // Create an iframe instead of a popup window
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+
+                iframe.onload = function () {
+                    try {
+                        iframe.contentWindow.print();
+                        // Clean up after printing
+                        setTimeout(() => {
+                            document.body.removeChild(iframe);
+                            URL.revokeObjectURL(blobURL);
+                        }, 1000);
+                    } catch (printError) {
+                        console.error("Print error:", printError);
+                        Core.Dialogs.addNotify({ message: "Error while printing: " + printError.message, type: "ERROR", timeout: 5000 });
+                        document.body.removeChild(iframe);
+                        URL.revokeObjectURL(blobURL);
+                    }
+                };
+
+                iframe.src = blobURL;
+            } catch (error) {
+                console.error("Error in printPDFInNewWindow:", error);
+                Core.Dialogs.addNotify({ message: "Error preparing document for print: " + error.message, type: "ERROR", timeout: 5000 });
             }
-            popup.print();
-
-            setTimeout(() => {
-                popup.close();
-            }, 30000);
         }
     };
 
