@@ -134,13 +134,13 @@ define(function (require) {
 
                                     // Calculate dimensions for 2x2 grid
                                     const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
-                                    const imageHeight = (pageHeight - 40) / 2; // 20px margin top/bottom
+                                    const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
 
                                     console.log('Page dimensions:', { pageWidth, pageHeight, imageWidth, imageHeight });
 
                                     // Calculate column positions
                                     const leftColumnX = 20; // 20px from left edge
-                                    const rightColumnX = pageWidth / 2 + 10; // Middle of page + 10px gap
+                                    const rightColumnX = Math.floor(pageWidth / 2) + 20; // Middle of page + 20px gap
 
                                     // First image (1/3) - Top left
                                     if (i < pngImages.length) {
@@ -260,14 +260,13 @@ define(function (require) {
 
             let labelPage = pdfDocument.getPages()[pageNumber];
 
-            let pageSize = labelPage.getSize();
+            console.log('Drawing image at:', { boxX, boxY, newImageWidth, newImageHeight });
 
             labelPage.drawImage(embeddedImage, {
                 x: boxX,
                 y: boxY,
                 width: newImageWidth,
-                height: newImageHeight,
-                rotate: pdfLib.degrees(90)
+                height: newImageHeight
             });
 
             return pdfDocument;
