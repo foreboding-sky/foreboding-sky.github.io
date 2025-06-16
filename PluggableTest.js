@@ -118,8 +118,8 @@ define(function (require) {
                             for (const page of packageLabelPages) {
                                 const { width, height } = page.getSize();
                                 const newPage = resultDocument.addPage([width, height]);
-                                const copiedContent = await resultDocument.embedPdf(page);
-                                newPage.drawPage(copiedContent);
+                                const operators = await page.getOperatorList();
+                                newPage.setOperatorList(operators);
                             }
                         }
                     }
