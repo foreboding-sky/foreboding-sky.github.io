@@ -144,13 +144,21 @@ define(function (require) {
                                     const adjustedLeftX = leftColumnX + (imageHeight / 2); // Add half the height for rotation
                                     const adjustedRightX = rightColumnX + (imageHeight / 2);
 
+                                    // Calculate vertical positions with reduced gap
+                                    const topY = pageHeight - imageHeight - 20; // Top margin
+                                    const bottomY = 20; // Bottom margin
+                                    const middleY = (topY + bottomY) / 2; // Middle point
+
                                     console.log('Page layout:', {
                                         pageSize: { width: pageWidth, height: pageHeight },
                                         imageSize: { width: imageWidth, height: imageHeight },
                                         leftColumnX,
                                         rightColumnX,
                                         adjustedLeftX,
-                                        adjustedRightX
+                                        adjustedRightX,
+                                        topY,
+                                        bottomY,
+                                        middleY
                                     });
 
                                     // First image (1/3) - Top left
@@ -161,7 +169,7 @@ define(function (require) {
                                             pngImages[i],
                                             resultDocument.getPageCount() - 1,
                                             adjustedLeftX,
-                                            pageHeight - imageHeight - 20,
+                                            topY,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -175,7 +183,7 @@ define(function (require) {
                                             pngImages[i + 1],
                                             resultDocument.getPageCount() - 1,
                                             adjustedLeftX,
-                                            20,
+                                            middleY,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -189,7 +197,7 @@ define(function (require) {
                                             pngImages[i + 2],
                                             resultDocument.getPageCount() - 1,
                                             adjustedRightX,
-                                            pageHeight - imageHeight - 20,
+                                            topY,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -203,7 +211,7 @@ define(function (require) {
                                             pngImages[i + 3],
                                             resultDocument.getPageCount() - 1,
                                             adjustedRightX,
-                                            20,
+                                            middleY,
                                             imageWidth,
                                             imageHeight
                                         );
