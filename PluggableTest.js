@@ -121,9 +121,24 @@ define(function (require) {
                             const pngImages = await convertPdfToPng(pdfData);
 
                             if (pngImages && pngImages.length > 0) {
-                                // Convert the byte array to base64
-                                //const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
-                                shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngImages[0], labelPageIndex, 0, 20, 550, 305);
+                                // Add shipping label template first
+                                let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
+                                shipingPages.forEach(page => resultDocument.addPage(page));
+
+                                // Add PNG images, 2 per page
+                                for (let i = 0; i < pngImages.length; i += 2) {
+                                    const page = resultDocument.addPage([595.28, 841.89]); // A4 size
+                                    const pageWidth = page.getWidth();
+                                    const pageHeight = page.getHeight();
+
+                                    // Add first image
+                                    await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 0, pageHeight - 400, pageWidth - 40, 380);
+
+                                    // Add second image if exists
+                                    if (i + 1 < pngImages.length) {
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, 0, pageHeight - 800, pageWidth - 40, 380);
+                                    }
+                                }
                             } else {
                                 console.error("No PNG images returned from conversion");
                                 Core.Dialogs.addNotify({ message: "Failed to convert PDF to PNG", type: "ERROR", timeout: 5000 });
@@ -132,9 +147,6 @@ define(function (require) {
                             console.error("Error during PDF to PNG conversion:", conversionError);
                             Core.Dialogs.addNotify({ message: "Error converting PDF to PNG: " + conversionError.message, type: "ERROR", timeout: 5000 });
                         }
-
-                        let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
-                        shipingPages.forEach(page => resultDocument.addPage(page));
                     }
                 }
 
