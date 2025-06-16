@@ -122,8 +122,8 @@ define(function (require) {
 
                             if (pngImages && pngImages.length > 0) {
                                 // Convert the byte array to base64
-                                const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
-                                shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngBase64, labelPageIndex, 0, 20, 550, 305);
+                                //const pngBase64 = btoa(String.fromCharCode.apply(null, new Uint8Array(pngImages[0])));
+                                shippingInvoiceDocument = await addImageToPdfFitInBox(shippingInvoiceDocument, pngImages[0], labelPageIndex, 0, 20, 550, 305);
                             } else {
                                 console.error("No PNG images returned from conversion");
                                 Core.Dialogs.addNotify({ message: "Failed to convert PDF to PNG", type: "ERROR", timeout: 5000 });
