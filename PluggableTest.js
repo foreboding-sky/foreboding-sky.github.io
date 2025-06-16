@@ -141,6 +141,7 @@ define(function (require) {
                                     // First image (1/3) - Top left
                                     if (i < pngImages.length) {
                                         console.log('Adding first image to top left');
+                                        console.log('BoxX' + 20 + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i],
@@ -155,6 +156,7 @@ define(function (require) {
                                     // Second image (2/3) - Bottom left
                                     if (i + 1 < pngImages.length) {
                                         console.log('Adding second image to bottom left');
+                                        console.log('BoxX' + 20 + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 1],
@@ -170,6 +172,7 @@ define(function (require) {
                                     if (i + 2 < pngImages.length) {
                                         console.log('Adding third image to top right');
                                         const rightX = Math.floor(pageWidth / 2) + 10;
+                                        console.log('BoxX' + rightX + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 2],
@@ -185,6 +188,7 @@ define(function (require) {
                                     if (i + 3 < pngImages.length) {
                                         console.log('Adding fourth image to bottom right');
                                         const rightX = Math.floor(pageWidth / 2) + 10;
+                                        console.log('BoxX' + rightX + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 3],
@@ -297,8 +301,6 @@ define(function (require) {
             contentType = contentType || '';
             const sliceSize = 512;
             const byteCharacters = window.atob(content);
-            console.log(content);
-            console.log(byteCharacters);
 
             const byteArrays = [];
             for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
