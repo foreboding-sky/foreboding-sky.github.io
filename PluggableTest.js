@@ -147,7 +147,7 @@ define(function (require) {
                                     // Calculate vertical positions with reduced gap
                                     const topY = pageHeight - imageHeight - 20; // Top margin
                                     const bottomY = 20; // Bottom margin
-                                    const middleY = (topY + bottomY); // Middle point
+                                    const middleY = topY - imageHeight - 20; // Middle point
 
                                     console.log('Page layout:', {
                                         pageSize: { width: pageWidth, height: pageHeight },
