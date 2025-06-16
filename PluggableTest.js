@@ -113,7 +113,14 @@ define(function (require) {
                         if (packageLabel) {
                             const packageLabelPdf = await pdfLib.PDFDocument.load(packageLabel);
                             const packageLabelPages = await resultDocument.copyPages(packageLabelPdf, getDocumentIndices(packageLabelPdf));
-                            packageLabelPages.forEach(page => resultDocument.addPage(page));
+
+                            // Copy each page while preserving its original dimensions and orientation
+                            for (const page of packageLabelPages) {
+                                const { width, height } = page.getSize();
+                                const newPage = resultDocument.addPage([width, height]);
+                                const copiedContent = await resultDocument.embedPdf(page);
+                                newPage.drawPage(copiedContent);
+                            }
                         }
                     }
                 }
