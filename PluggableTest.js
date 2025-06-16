@@ -150,7 +150,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX,
+                                            leftColumnX + imageHeight, // Adjust for rotation
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -165,7 +165,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 1],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX,
+                                            leftColumnX + imageHeight, // Adjust for rotation
                                             20,
                                             imageWidth,
                                             imageHeight
@@ -180,7 +180,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 2],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX,
+                                            rightColumnX + imageHeight, // Adjust for rotation
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -195,7 +195,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 3],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX,
+                                            rightColumnX + imageHeight, // Adjust for rotation
                                             20,
                                             imageWidth,
                                             imageHeight
@@ -262,11 +262,14 @@ define(function (require) {
 
             console.log('Drawing image at:', { boxX, boxY, newImageWidth, newImageHeight });
 
+            // When rotating 90 degrees, we need to adjust the position
+            // The rotation point is at (boxX, boxY)
             labelPage.drawImage(embeddedImage, {
                 x: boxX,
                 y: boxY,
                 width: newImageWidth,
-                height: newImageHeight
+                height: newImageHeight,
+                rotate: pdfLib.degrees(90)
             });
 
             return pdfDocument;
