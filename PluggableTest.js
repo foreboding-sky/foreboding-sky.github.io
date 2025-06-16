@@ -169,6 +169,7 @@ define(function (require) {
 
                 const pngImages = await response.json();
                 console.log("Received PNG images count:", pngImages.length);
+                console.log(pngImages);
                 return pngImages;
             } catch (error) {
                 console.error('Error converting PDF to PNG:', error);
