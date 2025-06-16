@@ -125,18 +125,33 @@ define(function (require) {
                                 let shipingPages = await resultDocument.copyPages(shippingInvoiceDocument, getDocumentIndices(shippingInvoiceDocument));
                                 shipingPages.forEach(page => resultDocument.addPage(page));
 
-                                // Add PNG images, 2 per page
-                                for (let i = 0; i < pngImages.length; i += 2) {
+                                // Add PNG images, 4 per page in 2x2 grid
+                                for (let i = 0; i < pngImages.length; i += 4) {
                                     const page = resultDocument.addPage([595.28, 841.89]); // A4 size
                                     const pageWidth = page.getWidth();
                                     const pageHeight = page.getHeight();
 
-                                    // Add first image
-                                    await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 0, pageHeight - 400, pageWidth - 40, 380);
+                                    // Calculate dimensions for 2x2 grid
+                                    const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
+                                    const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
 
-                                    // Add second image if exists
+                                    // Add images in 2x2 grid
+                                    // Top left
+                                    await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+
+                                    // Top right
                                     if (i + 1 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, 0, pageHeight - 800, pageWidth - 40, 380);
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, pageWidth - imageWidth - 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                    }
+
+                                    // Bottom left
+                                    if (i + 2 < pngImages.length) {
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 2], resultDocument.getPageCount() - 1, 20, 20, imageWidth, imageHeight);
+                                    }
+
+                                    // Bottom right
+                                    if (i + 3 < pngImages.length) {
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 3], resultDocument.getPageCount() - 1, pageWidth - imageWidth - 20, 20, imageWidth, imageHeight);
                                     }
                                 }
                             } else {
