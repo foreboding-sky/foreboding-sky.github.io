@@ -136,7 +136,14 @@ define(function (require) {
                                     const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
                                     const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
 
-                                    console.log('Page dimensions:', { pageWidth, pageHeight, imageWidth, imageHeight });
+                                    console.log('Page layout:', {
+                                        pageSize: { width: pageWidth, height: pageHeight },
+                                        imageSize: { width: imageWidth, height: imageHeight },
+                                        leftColumnX: 20,
+                                        rightColumnX: Math.floor(pageWidth / 2) + 20,
+                                        adjustedLeftX: 20 + imageHeight,
+                                        adjustedRightX: Math.floor(pageWidth / 2) + 20 + imageHeight
+                                    });
 
                                     // Calculate column positions
                                     const leftColumnX = 20; // 20px from left edge
@@ -145,12 +152,11 @@ define(function (require) {
                                     // First image (1/3) - Top left
                                     if (i < pngImages.length) {
                                         console.log('Adding first image to top left');
-                                        console.log('BoxX' + leftColumnX + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX + imageHeight, // Adjust for rotation
+                                            leftColumnX + imageHeight,
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -160,12 +166,11 @@ define(function (require) {
                                     // Second image (2/3) - Bottom left
                                     if (i + 1 < pngImages.length) {
                                         console.log('Adding second image to bottom left');
-                                        console.log('BoxX' + leftColumnX + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 1],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX + imageHeight, // Adjust for rotation
+                                            leftColumnX + imageHeight,
                                             20,
                                             imageWidth,
                                             imageHeight
@@ -175,12 +180,11 @@ define(function (require) {
                                     // Third image (3/3) - Top right
                                     if (i + 2 < pngImages.length) {
                                         console.log('Adding third image to top right');
-                                        console.log('BoxX' + rightColumnX + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 2],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX + imageHeight, // Adjust for rotation
+                                            rightColumnX + imageHeight,
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -190,12 +194,11 @@ define(function (require) {
                                     // Fourth image (if exists) - Bottom right
                                     if (i + 3 < pngImages.length) {
                                         console.log('Adding fourth image to bottom right');
-                                        console.log('BoxX' + rightColumnX + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 3],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX + imageHeight, // Adjust for rotation
+                                            rightColumnX + imageHeight,
                                             20,
                                             imageWidth,
                                             imageHeight
@@ -260,10 +263,13 @@ define(function (require) {
 
             let labelPage = pdfDocument.getPages()[pageNumber];
 
-            console.log('Drawing image at:', { boxX, boxY, newImageWidth, newImageHeight });
+            console.log('Drawing image with details:', {
+                originalSize: { width: imageWidth, height: imageHeight },
+                newSize: { width: newImageWidth, height: newImageHeight },
+                position: { x: boxX, y: boxY },
+                boxSize: { width: boxWidth, height: boxHeight }
+            });
 
-            // When rotating 90 degrees, we need to adjust the position
-            // The rotation point is at (boxX, boxY)
             labelPage.drawImage(embeddedImage, {
                 x: boxX,
                 y: boxY,
