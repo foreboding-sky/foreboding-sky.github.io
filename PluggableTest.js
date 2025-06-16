@@ -54,11 +54,8 @@ define(function (require) {
         };
 
         vm.loadFilesAndPrint = async (documents, allOrderIds, pageNumber, totalPages) => {
-            console.log("loadFilesAndPrint");
-            console.log(allOrderIds);
             let orderIds = paginate(allOrderIds, 4, pageNumber);
             vm.macroService.Run({ applicationName: "PluggableTestAndrii", macroName: "PallExLabels", orderIds }, async function (result) {
-                console.log(result);
                 if (!result.error) {
                     if (result.result.IsError) {
                         Core.Dialogs.addNotify({ message: result.result.ErrorMessage, type: "ERROR", timeout: 5000 });
@@ -90,10 +87,8 @@ define(function (require) {
         };
 
         vm.addLabelsAndPrint = async (documents) => {
-            console.log("addLabelsAndPrint");
             try {
                 const resultDocument = await pdfLib.PDFDocument.create();
-                console.log(documents);
                 if (documents.length === 0) {
                     Core.Dialogs.addNotify({ message: "No orders found to print.", type: "ERROR", timeout: 5000 });
                     vm.setLoading(false);
@@ -102,8 +97,6 @@ define(function (require) {
 
                 for (let i = 0; i < documents.length; i++) {
                     let packageLabel = documents[i].Label
-                    console.log("Package Label type:", typeof packageLabel);
-                    console.log("Package Label length:", packageLabel.length);
 
                     if (!!documents[i].ShippingLabelTemplateBase64) {
                         let shippingInvoiceDocument = await pdfLib.PDFDocument.load(documents[i].ShippingLabelTemplateBase64);
@@ -125,8 +118,6 @@ define(function (require) {
                                 ? packageLabel.split(',')[1]
                                 : packageLabel;
 
-                            console.log("PDF data length:", pdfData.length);
-                            console.log("PDF base64 data:", pdfData);
                             const pngImages = await convertPdfToPng(pdfData);
 
                             if (pngImages && pngImages.length > 0) {
