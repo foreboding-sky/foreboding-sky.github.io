@@ -136,20 +136,22 @@ define(function (require) {
                                     const imageHeight = (pageHeight - 40) / 2; // 20px margin top/bottom
 
                                     // Add images in 2x2 grid
-                                    // Top left
-                                    await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                    // First image - Top left
+                                    if (i < pngImages.length) {
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                    }
 
-                                    // Top right
+                                    // Second image - Bottom left
                                     if (i + 1 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, 20, 20, imageWidth, imageHeight);
                                     }
 
-                                    // Bottom left
+                                    // Third image - Top right
                                     if (i + 2 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 2], resultDocument.getPageCount() - 1, 20, 20, imageWidth, imageHeight);
+                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 2], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, pageHeight - imageHeight - 20, imageWidth, imageHeight);
                                     }
 
-                                    // Bottom right
+                                    // Fourth image - Bottom right (if exists)
                                     if (i + 3 < pngImages.length) {
                                         await addImageToPdfFitInBox(resultDocument, pngImages[i + 3], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, 20, imageWidth, imageHeight);
                                     }
