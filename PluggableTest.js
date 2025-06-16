@@ -127,6 +127,7 @@ define(function (require) {
 
                                 // Add PNG images, 4 per page in 2x2 grid
                                 for (let i = 0; i < pngImages.length; i += 4) {
+                                    console.log(`Processing images starting at index ${i}, total images: ${pngImages.length}`);
                                     const page = resultDocument.addPage([595.28, 841.89]); // A4 size
                                     const pageWidth = page.getWidth();
                                     const pageHeight = page.getHeight();
@@ -135,25 +136,64 @@ define(function (require) {
                                     const imageWidth = (pageWidth - 40) / 2; // 20px margin on each side
                                     const imageHeight = (pageHeight - 40) / 2; // 20px margin top/bottom
 
-                                    // Add images in 2x2 grid
-                                    // First image - Top left
+                                    console.log('Page dimensions:', { pageWidth, pageHeight, imageWidth, imageHeight });
+
+                                    // First image (1/3) - Top left
                                     if (i < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i], resultDocument.getPageCount() - 1, 20, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                        console.log('Adding first image to top left');
+                                        await addImageToPdfFitInBox(
+                                            resultDocument,
+                                            pngImages[i],
+                                            resultDocument.getPageCount() - 1,
+                                            20, // x position
+                                            pageHeight - imageHeight - 20, // y position
+                                            imageWidth,
+                                            imageHeight
+                                        );
                                     }
 
-                                    // Second image - Bottom left
+                                    // Second image (2/3) - Bottom left
                                     if (i + 1 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 1], resultDocument.getPageCount() - 1, 20, 20, imageWidth, imageHeight);
+                                        console.log('Adding second image to bottom left');
+                                        await addImageToPdfFitInBox(
+                                            resultDocument,
+                                            pngImages[i + 1],
+                                            resultDocument.getPageCount() - 1,
+                                            20, // x position
+                                            20, // y position
+                                            imageWidth,
+                                            imageHeight
+                                        );
                                     }
 
-                                    // Third image - Top right
+                                    // Third image (3/3) - Top right
                                     if (i + 2 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 2], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, pageHeight - imageHeight - 20, imageWidth, imageHeight);
+                                        console.log('Adding third image to top right');
+                                        const rightX = Math.floor(pageWidth / 2) + 10;
+                                        await addImageToPdfFitInBox(
+                                            resultDocument,
+                                            pngImages[i + 2],
+                                            resultDocument.getPageCount() - 1,
+                                            rightX, // x position
+                                            pageHeight - imageHeight - 20, // y position
+                                            imageWidth,
+                                            imageHeight
+                                        );
                                     }
 
-                                    // Fourth image - Bottom right (if exists)
+                                    // Fourth image (if exists) - Bottom right
                                     if (i + 3 < pngImages.length) {
-                                        await addImageToPdfFitInBox(resultDocument, pngImages[i + 3], resultDocument.getPageCount() - 1, pageWidth / 2 + 10, 20, imageWidth, imageHeight);
+                                        console.log('Adding fourth image to bottom right');
+                                        const rightX = Math.floor(pageWidth / 2) + 10;
+                                        await addImageToPdfFitInBox(
+                                            resultDocument,
+                                            pngImages[i + 3],
+                                            resultDocument.getPageCount() - 1,
+                                            rightX, // x position
+                                            20, // y position
+                                            imageWidth,
+                                            imageHeight
+                                        );
                                     }
                                 }
                             } else {
