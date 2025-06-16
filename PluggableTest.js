@@ -260,8 +260,6 @@ define(function (require) {
 
             let pageSize = labelPage.getSize();
 
-            boxX = (pageSize.width - (pageSize.width - boxWidth));
-
             labelPage.drawImage(embeddedImage, {
                 x: boxX,
                 y: boxY,
