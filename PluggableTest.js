@@ -136,18 +136,22 @@ define(function (require) {
                                     const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
                                     const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
 
-                                    console.log('Page layout:', {
-                                        pageSize: { width: pageWidth, height: pageHeight },
-                                        imageSize: { width: imageWidth, height: imageHeight },
-                                        leftColumnX: 20,
-                                        rightColumnX: Math.floor(pageWidth / 2) + 20,
-                                        adjustedLeftX: 20 + imageHeight,
-                                        adjustedRightX: Math.floor(pageWidth / 2) + 20 + imageHeight
-                                    });
-
                                     // Calculate column positions
                                     const leftColumnX = 20; // 20px from left edge
                                     const rightColumnX = Math.floor(pageWidth / 2) + 20; // Middle of page + 20px gap
+
+                                    // Calculate adjusted positions for rotation
+                                    const adjustedLeftX = leftColumnX + (imageHeight / 2); // Add half the height for rotation
+                                    const adjustedRightX = rightColumnX + (imageHeight / 2);
+
+                                    console.log('Page layout:', {
+                                        pageSize: { width: pageWidth, height: pageHeight },
+                                        imageSize: { width: imageWidth, height: imageHeight },
+                                        leftColumnX,
+                                        rightColumnX,
+                                        adjustedLeftX,
+                                        adjustedRightX
+                                    });
 
                                     // First image (1/3) - Top left
                                     if (i < pngImages.length) {
@@ -156,7 +160,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX + imageHeight,
+                                            adjustedLeftX,
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -170,7 +174,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 1],
                                             resultDocument.getPageCount() - 1,
-                                            leftColumnX + imageHeight,
+                                            adjustedLeftX,
                                             20,
                                             imageWidth,
                                             imageHeight
@@ -184,7 +188,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 2],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX + imageHeight,
+                                            adjustedRightX,
                                             pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
@@ -198,7 +202,7 @@ define(function (require) {
                                             resultDocument,
                                             pngImages[i + 3],
                                             resultDocument.getPageCount() - 1,
-                                            rightColumnX + imageHeight,
+                                            adjustedRightX,
                                             20,
                                             imageWidth,
                                             imageHeight
