@@ -137,8 +137,8 @@ define(function (require) {
                                     const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
 
                                     // Calculate column positions
-                                    const leftColumnX = 20; // 20px from left edge
-                                    const rightColumnX = Math.floor(pageWidth / 2) + 20; // Middle of page + 20px gap
+                                    const leftColumnX = 50; // Increased from 20 to 50 to move everything right
+                                    const rightColumnX = Math.floor(pageWidth / 2) + 50; // Increased offset to maintain spacing
 
                                     // Calculate adjusted positions for rotation
                                     const adjustedLeftX = leftColumnX + (imageHeight / 2); // Add half the height for rotation
