@@ -133,21 +133,25 @@ define(function (require) {
                                     const pageHeight = page.getHeight();
 
                                     // Calculate dimensions for 2x2 grid
-                                    const imageWidth = (pageWidth - 40) / 2; // 20px margin on each side
+                                    const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
                                     const imageHeight = (pageHeight - 40) / 2; // 20px margin top/bottom
 
                                     console.log('Page dimensions:', { pageWidth, pageHeight, imageWidth, imageHeight });
 
+                                    // Calculate column positions
+                                    const leftColumnX = 20; // 20px from left edge
+                                    const rightColumnX = pageWidth / 2 + 10; // Middle of page + 10px gap
+
                                     // First image (1/3) - Top left
                                     if (i < pngImages.length) {
                                         console.log('Adding first image to top left');
-                                        console.log('BoxX' + 20 + 'BoxY' + (pageHeight - imageHeight - 20));
+                                        console.log('BoxX' + leftColumnX + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i],
                                             resultDocument.getPageCount() - 1,
-                                            20, // x position
-                                            pageHeight - imageHeight - 20, // y position
+                                            leftColumnX,
+                                            pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -156,13 +160,13 @@ define(function (require) {
                                     // Second image (2/3) - Bottom left
                                     if (i + 1 < pngImages.length) {
                                         console.log('Adding second image to bottom left');
-                                        console.log('BoxX' + 20 + 'BoxY' + 20);
+                                        console.log('BoxX' + leftColumnX + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 1],
                                             resultDocument.getPageCount() - 1,
-                                            20, // x position
-                                            20, // y position
+                                            leftColumnX,
+                                            20,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -171,14 +175,13 @@ define(function (require) {
                                     // Third image (3/3) - Top right
                                     if (i + 2 < pngImages.length) {
                                         console.log('Adding third image to top right');
-                                        const rightX = Math.floor(pageWidth / 2) + 10;
-                                        console.log('BoxX' + rightX + 'BoxY' + (pageHeight - imageHeight - 20));
+                                        console.log('BoxX' + rightColumnX + 'BoxY' + (pageHeight - imageHeight - 20));
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 2],
                                             resultDocument.getPageCount() - 1,
-                                            rightX, // x position
-                                            pageHeight - imageHeight - 20, // y position
+                                            rightColumnX,
+                                            pageHeight - imageHeight - 20,
                                             imageWidth,
                                             imageHeight
                                         );
@@ -187,14 +190,13 @@ define(function (require) {
                                     // Fourth image (if exists) - Bottom right
                                     if (i + 3 < pngImages.length) {
                                         console.log('Adding fourth image to bottom right');
-                                        const rightX = Math.floor(pageWidth / 2) + 10;
-                                        console.log('BoxX' + rightX + 'BoxY' + 20);
+                                        console.log('BoxX' + rightColumnX + 'BoxY' + 20);
                                         await addImageToPdfFitInBox(
                                             resultDocument,
                                             pngImages[i + 3],
                                             resultDocument.getPageCount() - 1,
-                                            rightX, // x position
-                                            20, // y position
+                                            rightColumnX,
+                                            20,
                                             imageWidth,
                                             imageHeight
                                         );
