@@ -112,14 +112,11 @@ define(function (require) {
                         // Add package label pages if they exist
                         if (packageLabel) {
                             const packageLabelPdf = await pdfLib.PDFDocument.load(packageLabel);
-                            const packageLabelPages = await resultDocument.copyPages(packageLabelPdf, getDocumentIndices(packageLabelPdf));
+                            const pageCount = packageLabelPdf.getPageCount();
 
-                            // Copy each page while preserving its original dimensions and orientation
-                            for (const page of packageLabelPages) {
-                                const { width, height } = page.getSize();
-                                const newPage = resultDocument.addPage([width, height]);
-                                const operators = await page.getOperatorList();
-                                newPage.setOperatorList(operators);
+                            for (let i = 0; i < pageCount; i++) {
+                                const [page] = await resultDocument.copyPages(packageLabelPdf, [i]);
+                                resultDocument.addPage(page);
                             }
                         }
                     }
