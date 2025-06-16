@@ -133,12 +133,12 @@ define(function (require) {
                                     const pageHeight = page.getHeight();
 
                                     // Calculate dimensions for 2x2 grid
-                                    const imageWidth = (pageWidth - 60) / 2; // 20px margin on each side, 20px between columns
-                                    const imageHeight = (pageHeight - 60) / 2; // 20px margin top/bottom, 20px between rows
+                                    const imageWidth = ((pageWidth - 60) / 2) * 0.9; // 20px margin on each side, 20px between columns, 10% smaller
+                                    const imageHeight = ((pageHeight - 60) / 2) * 0.9; // 20px margin top/bottom, 20px between rows, 10% smaller
 
                                     // Calculate column positions
-                                    const leftColumnX = 50; // Increased from 20 to 50 to move everything right
-                                    const rightColumnX = Math.floor(pageWidth / 2) + 50; // Increased offset to maintain spacing
+                                    const leftColumnX = 60; // Increased from 50 to 60 to move everything right
+                                    const rightColumnX = Math.floor(pageWidth / 2) + 60; // Increased offset to maintain spacing
 
                                     // Calculate adjusted positions for rotation
                                     const adjustedLeftX = leftColumnX + (imageHeight / 2); // Add half the height for rotation
