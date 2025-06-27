@@ -17,35 +17,47 @@ if (document.readyState === "loading") {
 }
 
 function injectAIDescriptionControls() {
-    // Helper to find the .buttons area in DescriptionEditorView
-    function findDescriptionEditorButtons() {
-        const candidates = document.querySelectorAll("div[ng-controller='DescriptionEditorView'] .buttons");
-        return candidates.length ? candidates[0] : null;
+    // Helper to find the .control-group area in the content section
+    function findContentControlGroup() {
+        // Find the first .window .content .form-horizontal .control-group
+        const content = document.querySelector(".window .content .form-horizontal.ng-pristine.ng-valid");
+        if (!content) return null;
+        // We'll inject as a new .control-group at the end
+        return content;
     }
 
     // Try to inject immediately, or observe for later
     function tryInject() {
-        const buttonsDiv = findDescriptionEditorButtons();
-        if (buttonsDiv && !buttonsDiv.querySelector("#ai-description-action")) {
-            // Create dropdown
+        const contentDiv = findContentControlGroup();
+        if (contentDiv && !contentDiv.querySelector("#ai-description-helper-group")) {
+            // Create a new control-group div (column layout)
+            const groupDiv = document.createElement("div");
+            groupDiv.className = "control-group";
+            groupDiv.id = "ai-description-helper-group";
+            groupDiv.style.display = "flex";
+            groupDiv.style.flexDirection = "column";
+            groupDiv.style.alignItems = "flex-start";
+            groupDiv.style.gap = "8px";
+
+            // Create dropdown (full width)
             const select = document.createElement("select");
             select.id = "ai-description-action";
             select.className = "form-control input-sm";
+            select.style.width = "100%";
             for (const action of descriptionActions) {
                 const option = document.createElement("option");
                 option.value = action;
                 option.textContent = action;
                 select.appendChild(option);
             }
-            select.style.display = "inline-block";
-            select.style.marginRight = "8px";
 
-            // Create button
+            // Create button (full width)
             const button = document.createElement("button");
             button.id = "ai-description-btn";
             button.className = "btn btn-primary btn-sm";
             button.type = "button";
             button.textContent = "AI Rewrite";
+            button.style.width = "100%";
 
             // Button click handler
             button.addEventListener("click", async function () {
@@ -54,14 +66,11 @@ function injectAIDescriptionControls() {
                 button.disabled = true;
                 button.innerHTML = '<span class="fa fa-spinner fa-spin"></span> AI Rewrite';
                 try {
-                    // Get description as plain text (strip HTML tags for AI)
                     const body = getDescriptionEditorIframeBody();
                     if (!body) throw new Error("Could not find description editor.");
                     const descriptionText = body.innerText || body.textContent || "";
                     if (!descriptionText.trim()) throw new Error("Description is empty.");
-                    // Send to AI
                     const newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction);
-                    // Set new description as a <p> (preserve basic formatting)
                     setDescriptionHtml(`<p>${newDescription.replace(/\n/g, "<br>")}</p>`);
                 } catch (err) {
                     alert("AI Description Error: " + err.message);
@@ -71,9 +80,12 @@ function injectAIDescriptionControls() {
                 }
             });
 
-            // Insert controls
-            buttonsDiv.prepend(button);
-            buttonsDiv.prepend(select);
+            // Add controls to group
+            groupDiv.appendChild(select);
+            groupDiv.appendChild(button);
+
+            // Inject at the end of the form
+            contentDiv.appendChild(groupDiv);
         }
     }
 
