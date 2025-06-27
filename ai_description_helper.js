@@ -18,20 +18,20 @@ if (document.readyState === "loading") {
 function injectAIDescriptionControls() {
     // Helper to find the .control-group area in the content section
     function findContentControlGroup() {
-        // Find the first .window .content .form-horizontal .control-group
-        const content = document.querySelector(".window .content .form-horizontal.ng-pristine.ng-valid");
-        if (!content) return null;
-        // We'll inject as a new .control-group at the end
-        return content;
+        // Find the form inside .content
+        const form = document.querySelector('.content > form.form-horizontal.ng-pristine.ng-valid');
+        if (!form) return null;
+        // Find the first .control-group inside the form
+        const group = form.querySelector('div.control-group');
+        return group || null;
     }
 
     // Try to inject immediately, or observe for later
     function tryInject() {
         const contentDiv = findContentControlGroup();
         if (contentDiv && !contentDiv.querySelector("#ai-description-helper-group")) {
-            // Create a new control-group div (column layout)
+            // Add controls directly to the existing .control-group
             const groupDiv = document.createElement("div");
-            groupDiv.className = "control-group";
             groupDiv.id = "ai-description-helper-group";
             groupDiv.style.display = "flex";
             groupDiv.style.flexDirection = "column";
@@ -93,7 +93,7 @@ function injectAIDescriptionControls() {
             groupDiv.appendChild(select);
             groupDiv.appendChild(button);
 
-            // Inject at the end of the form
+            // Inject into the existing .control-group
             contentDiv.appendChild(groupDiv);
         }
     }
