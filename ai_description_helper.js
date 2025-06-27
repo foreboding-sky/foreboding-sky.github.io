@@ -46,6 +46,7 @@ function injectAIDescriptionControls() {
             const select = document.createElement("select");
             select.id = "ai-description-action";
             select.className = "form-control input-sm";
+            select.style.marginLeft = "8px";
             select.style.width = "175px";
             select.style.minWidth = "175px";
             select.style.maxWidth = "175px";
