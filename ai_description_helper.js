@@ -16,12 +16,9 @@ if (document.readyState === "loading") {
 }
 
 function injectAIDescriptionControls() {
-    // Helper to find the .control-group area in the content section
     function findContentControlGroup() {
-        // Find the form inside .content
         const form = document.querySelector('.content > form.form-horizontal.ng-pristine.ng-valid');
         if (!form) return null;
-        // Find the first .control-group inside the form
         const group = form.querySelector('div.control-group');
         return group || null;
     }
@@ -30,27 +27,28 @@ function injectAIDescriptionControls() {
     function tryInject() {
         const contentDiv = findContentControlGroup();
         if (contentDiv && !contentDiv.querySelector("#ai-description-helper-group")) {
-            // Add controls directly to the existing .control-group
+            // Group stylings
             const groupDiv = document.createElement("div");
             groupDiv.id = "ai-description-helper-group";
             groupDiv.style.display = "flex";
-            groupDiv.style.flexDirection = "column";
-            groupDiv.style.alignItems = "flex-start";
-            groupDiv.style.gap = "8px";
+            groupDiv.style.flexDirection = "row";
+            groupDiv.style.alignItems = "left";
+            groupDiv.style.marginTop = "8px";
 
-            // Create API key input (full width)
+            // Temporary create API key input
             const apiKeyInput = document.createElement("input");
-            apiKeyInput.type = "password";
             apiKeyInput.id = "ai-openai-key";
             apiKeyInput.className = "form-control input-sm";
-            apiKeyInput.placeholder = "OpenAI API Key (optional)";
+            apiKeyInput.placeholder = "OpenAI API Key";
             apiKeyInput.style.width = "100%";
 
-            // Create dropdown (full width)
+            // Create dropdown
             const select = document.createElement("select");
             select.id = "ai-description-action";
             select.className = "form-control input-sm";
-            select.style.width = "100%";
+            select.style.width = "175px";
+            select.style.minWidth = "175px";
+            select.style.maxWidth = "175px";
             for (const action of descriptionActions) {
                 const option = document.createElement("option");
                 option.value = action;
@@ -58,15 +56,18 @@ function injectAIDescriptionControls() {
                 select.appendChild(option);
             }
 
-            // Create button (full width)
+            // Create button 
             const button = document.createElement("button");
             button.id = "ai-description-btn";
             button.className = "btn btn-primary btn-sm";
             button.type = "button";
             button.textContent = "AI Rewrite";
-            button.style.width = "100%";
+            button.style.width = "auto";
+            button.style.marginLeft = "8px";
+            button.style.padding = "2px 10px";
+            button.style.fontSize = "13px";
 
-            // Button click handler (use input value if present)
+            // Button click handler
             button.addEventListener("click", async function () {
                 const selectedAction = select.value;
                 const userApiKey = apiKeyInput.value.trim();
@@ -88,12 +89,10 @@ function injectAIDescriptionControls() {
                 }
             });
 
-            // Add controls to group (input, then dropdown, then button)
+            // Add controls to group
             groupDiv.appendChild(apiKeyInput);
             groupDiv.appendChild(select);
             groupDiv.appendChild(button);
-
-            // Inject into the existing .control-group
             contentDiv.appendChild(groupDiv);
         }
     }
@@ -140,12 +139,7 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey) {
     return data.choices[0].message.content.trim();
 }
 
-// --- Text Editor Iframe Helpers ---
-
-/**
- * Finds the <body> element inside the description editor's iframe.
- * @returns {HTMLElement|null}
- */
+// Finds the <body> element inside the description editor's iframe.
 function getDescriptionEditorIframeBody() {
     const iframe = document.querySelector(
         'div.tabset div.tab-content div.tab-pane.position-relative.active ' +
@@ -160,19 +154,13 @@ function getDescriptionEditorIframeBody() {
     return iframeDoc.body;
 }
 
-/**
- * Gets the description as HTML from the editor.
- * @returns {string|null}
- */
+//Gets the description as HTML from the editor.
 function getDescriptionHtml() {
     const body = getDescriptionEditorIframeBody();
     return body ? body.innerHTML : null;
 }
 
-/**
- * Sets the description as HTML in the editor.
- * @param {string} html
- */
+// Sets the description as HTML in the editor.
 function setDescriptionHtml(html) {
     const body = getDescriptionEditorIframeBody();
     if (body) body.innerHTML = html;
