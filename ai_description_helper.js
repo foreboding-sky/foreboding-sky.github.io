@@ -1,6 +1,5 @@
 "use strict";
 
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE";
 const descriptionActions = [
     "Improve writing",
     "Fix spelling and grammar",
@@ -39,6 +38,14 @@ function injectAIDescriptionControls() {
             groupDiv.style.alignItems = "flex-start";
             groupDiv.style.gap = "8px";
 
+            // Create API key input (full width)
+            const apiKeyInput = document.createElement("input");
+            apiKeyInput.type = "password";
+            apiKeyInput.id = "ai-openai-key";
+            apiKeyInput.className = "form-control input-sm";
+            apiKeyInput.placeholder = "OpenAI API Key (optional)";
+            apiKeyInput.style.width = "100%";
+
             // Create dropdown (full width)
             const select = document.createElement("select");
             select.id = "ai-description-action";
@@ -59,9 +66,10 @@ function injectAIDescriptionControls() {
             button.textContent = "AI Rewrite";
             button.style.width = "100%";
 
-            // Button click handler
+            // Button click handler (use input value if present)
             button.addEventListener("click", async function () {
                 const selectedAction = select.value;
+                const userApiKey = apiKeyInput.value.trim();
                 const originalHtml = button.innerHTML;
                 button.disabled = true;
                 button.innerHTML = '<span class="fa fa-spinner fa-spin"></span> AI Rewrite';
@@ -70,7 +78,7 @@ function injectAIDescriptionControls() {
                     if (!body) throw new Error("Could not find description editor.");
                     const descriptionText = body.innerText || body.textContent || "";
                     if (!descriptionText.trim()) throw new Error("Description is empty.");
-                    const newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction);
+                    const newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined);
                     setDescriptionHtml(`<p>${newDescription.replace(/\n/g, "<br>")}</p>`);
                 } catch (err) {
                     alert("AI Description Error: " + err.message);
@@ -80,7 +88,8 @@ function injectAIDescriptionControls() {
                 }
             });
 
-            // Add controls to group
+            // Add controls to group (input, then dropdown, then button)
+            groupDiv.appendChild(apiKeyInput);
             groupDiv.appendChild(select);
             groupDiv.appendChild(button);
 
@@ -98,7 +107,8 @@ function injectAIDescriptionControls() {
 }
 
 async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey) {
-    const apiKey = openAIApiKey || OPENAI_API_KEY;
+    if (!openAIApiKey) throw new Error("OpenAI API key is required.");
+    const apiKey = openAIApiKey;
     const prompts = {
         "Improve writing": `Improve writing for this line: ${itemDescription}`,
         "Fix spelling and grammar": `Fix spelling and grammar for this line: ${itemDescription}`,
