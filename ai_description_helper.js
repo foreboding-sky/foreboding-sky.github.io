@@ -16,17 +16,17 @@ if (document.readyState === "loading") {
 }
 
 function injectAIDescriptionControls() {
-    function findContentControlGroup() {
-        const form = document.querySelector('.content > form.form-horizontal.ng-pristine.ng-valid');
-        if (!form) return null;
-        const group = form.querySelector('div.control-group');
-        return group || null;
+    // Helper to find the correct injection point (like placeholderChannelDescriptions.js)
+    function findDescriptionEditorButtons() {
+        // Look for the .buttons inside the DescriptionEditorView controller
+        const containers = document.querySelectorAll("div[ng-controller='DescriptionEditorView'] .buttons");
+        return containers.length > 0 ? containers[0] : null;
     }
 
     // Try to inject immediately, or observe for later
     function tryInject() {
-        const contentDiv = findContentControlGroup();
-        if (contentDiv && !contentDiv.querySelector("#ai-description-helper-group")) {
+        const buttonsDiv = findDescriptionEditorButtons();
+        if (buttonsDiv && !buttonsDiv.querySelector("#ai-description-helper-group")) {
             // Group stylings
             const groupDiv = document.createElement("div");
             groupDiv.id = "ai-description-helper-group";
@@ -94,16 +94,21 @@ function injectAIDescriptionControls() {
             groupDiv.appendChild(apiKeyInput);
             groupDiv.appendChild(select);
             groupDiv.appendChild(button);
-            contentDiv.appendChild(groupDiv);
+            buttonsDiv.prepend(groupDiv);
         }
     }
 
     // Try once in case already present
     tryInject();
 
-    // Observe for dynamic view changes
-    const observer = new MutationObserver(tryInject);
-    observer.observe(document.body, { childList: true, subtree: true });
+    // Observe for dynamic view changes (only in legacy-windows-container)
+    setTimeout(function () {
+        const targetNode = document.getElementsByClassName("legacy-windows-container")[0];
+        if (targetNode) {
+            const observer = new MutationObserver(tryInject);
+            observer.observe(targetNode, { childList: true, subtree: true });
+        }
+    }, 2000);
 }
 
 async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey) {
