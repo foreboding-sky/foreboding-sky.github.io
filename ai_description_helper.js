@@ -16,17 +16,20 @@ if (document.readyState === "loading") {
 }
 
 function injectAIDescriptionControls() {
-    // Helper to find the correct injection point (like placeholderChannelDescriptions.js)
-    function findDescriptionEditorButtons() {
-        // Look for the .buttons inside the DescriptionEditorView controller
-        const containers = document.querySelectorAll("div[ng-controller='DescriptionEditorView'] .buttons");
-        return containers.length > 0 ? containers[0] : null;
+    // Helper to find the correct injection point: form inside DescriptionEditorView
+    function findDescriptionEditorFormGroup() {
+        const view = document.querySelector("div[ng-controller='DescriptionEditorView']");
+        if (!view) return null;
+        const form = view.querySelector("form.form-horizontal.ng-pristine.ng-valid");
+        if (!form) return null;
+        const group = form.querySelector("div.control-group");
+        return group || null;
     }
 
     // Try to inject immediately, or observe for later
     function tryInject() {
-        const buttonsDiv = findDescriptionEditorButtons();
-        if (buttonsDiv && !buttonsDiv.querySelector("#ai-description-helper-group")) {
+        const controlGroup = findDescriptionEditorFormGroup();
+        if (controlGroup && !controlGroup.parentNode.querySelector("#ai-description-helper-group")) {
             // Group stylings
             const groupDiv = document.createElement("div");
             groupDiv.id = "ai-description-helper-group";
@@ -94,7 +97,12 @@ function injectAIDescriptionControls() {
             groupDiv.appendChild(apiKeyInput);
             groupDiv.appendChild(select);
             groupDiv.appendChild(button);
-            buttonsDiv.prepend(groupDiv);
+            // Insert after the first control-group
+            if (controlGroup.nextSibling) {
+                controlGroup.parentNode.insertBefore(groupDiv, controlGroup.nextSibling);
+            } else {
+                controlGroup.parentNode.appendChild(groupDiv);
+            }
         }
     }
 
