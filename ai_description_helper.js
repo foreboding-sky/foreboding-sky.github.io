@@ -44,6 +44,7 @@ function injectAIDescriptionControls() {
             apiKeyInput.className = "form-control input-sm";
             apiKeyInput.placeholder = "OpenAI API Key";
             apiKeyInput.style.width = "100%";
+            apiKeyInput.style.height = "28px";
             apiKeyInput.style.flex = "1 1 0%";
 
             // Create dropdown
@@ -68,11 +69,13 @@ function injectAIDescriptionControls() {
             select.appendChild(customOption);
 
             // Create custom prompt input (hidden by default)
-            const customPromptDiv = document.createElement("div");
-            customPromptDiv.style.display = "none";
-            customPromptDiv.style.flex = "1";
-            customPromptDiv.style.marginTop = "8px";
+            //const customPromptDiv = document.createElement("div");
+            //customPromptDiv.style.display = "none";
+            //customPromptDiv.style.flex = "1";
+            //customPromptDiv.style.marginTop = "8px";
             const customPromptInput = document.createElement("input");
+            customPromptInput.style.display = "none";
+            customPromptInput.style.marginTop = "8px";
             customPromptInput.type = "text";
             customPromptInput.id = "ai-custom-prompt";
             customPromptInput.className = "form-control input-sm";
@@ -87,6 +90,7 @@ function injectAIDescriptionControls() {
             button.type = "button";
             button.textContent = "AI Rewrite";
             button.style.width = "auto";
+            button.style.marginTop = "8px";
             button.style.marginLeft = "8px";
             button.style.padding = "2px 10px";
             button.style.fontSize = "13px";
@@ -110,16 +114,16 @@ function injectAIDescriptionControls() {
             row2.style.width = "100%";
             customPromptDiv.style.flex = "1 1 0%";
             button.style.flex = "none";
-            row2.appendChild(customPromptDiv);
+            row2.appendChild(customPromptInput);
             row2.appendChild(button);
 
             // Show/hide custom prompt input and adjust layout
             select.addEventListener("change", function () {
                 if (select.value === "Custom prompt") {
-                    customPromptDiv.style.display = "block";
+                    customPromptInput.style.display = "block";
                     button.style.marginLeft = "8px";
                 } else {
-                    customPromptDiv.style.display = "none";
+                    customPromptInput.style.display = "none";
                     button.style.marginLeft = "8px";
                 }
             });
