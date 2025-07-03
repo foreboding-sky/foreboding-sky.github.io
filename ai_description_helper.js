@@ -5,7 +5,8 @@ const descriptionActions = [
     "Fix spelling and grammar",
     "Make longer",
     "Make shorter",
-    "Simplify writing"
+    "Simplify writing",
+    "Custom prompt"
 ];
 
 // Wait for DOM ready
@@ -38,7 +39,7 @@ function injectAIDescriptionControls() {
             groupDiv.style.alignItems = "stretch";
             groupDiv.style.marginTop = "8px";
 
-            // Temporary create API key input
+            // API key input
             const apiKeyInput = document.createElement("input");
             apiKeyInput.id = "ai-openai-key";
             apiKeyInput.className = "form-control input-sm";
@@ -47,7 +48,7 @@ function injectAIDescriptionControls() {
             apiKeyInput.style.height = "28px";
             apiKeyInput.style.flex = "1 1 0%";
 
-            // Create dropdown
+            // Dropdown
             const select = document.createElement("select");
             select.id = "ai-description-action";
             select.className = "form-control input-sm";
@@ -62,17 +63,8 @@ function injectAIDescriptionControls() {
                 option.textContent = action;
                 select.appendChild(option);
             }
-            // Add Custom prompt option
-            const customOption = document.createElement("option");
-            customOption.value = "Custom prompt";
-            customOption.textContent = "Custom prompt";
-            select.appendChild(customOption);
 
-            // Create custom prompt input (hidden by default)
-            //const customPromptDiv = document.createElement("div");
-            //customPromptDiv.style.display = "none";
-            //customPromptDiv.style.flex = "1";
-            //customPromptDiv.style.marginTop = "8px";
+            // Custom prompt input (hidden by default)
             const customPromptInput = document.createElement("input");
             customPromptInput.style.display = "none";
             customPromptInput.style.marginTop = "8px";
@@ -81,7 +73,6 @@ function injectAIDescriptionControls() {
             customPromptInput.className = "form-control input-sm";
             customPromptInput.placeholder = "Enter your custom prompt...";
             customPromptInput.style.width = "100%";
-            customPromptDiv.appendChild(customPromptInput);
 
             // Create button 
             const button = document.createElement("button");
