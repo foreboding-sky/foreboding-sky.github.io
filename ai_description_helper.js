@@ -106,27 +106,48 @@ function injectAIDescriptionControls() {
             select.style.flex = "none";
             row1.appendChild(apiKeyInput);
             row1.appendChild(select);
+            row1.appendChild(button); // Button is in row1 by default
 
             const row2 = document.createElement("div");
             row2.style.display = "flex";
             row2.style.flexDirection = "row";
             row2.style.alignItems = "center";
             row2.style.width = "100%";
-            customPromptDiv.style.flex = "1 1 0%";
+            customPromptInput.style.flex = "1 1 0%";
             button.style.flex = "none";
             row2.appendChild(customPromptInput);
-            row2.appendChild(button);
+            // button will be moved here dynamically if needed
 
-            // Show/hide custom prompt input and adjust layout
+            // Make the groupDiv a column flexbox so rows stack vertically
+            groupDiv.style.display = "flex";
+            groupDiv.style.flexDirection = "column";
+            groupDiv.style.alignItems = "stretch";
+            groupDiv.style.marginTop = "8px";
+
+            // Show/hide custom prompt input and move button
             select.addEventListener("change", function () {
                 if (select.value === "Custom prompt") {
                     customPromptInput.style.display = "block";
-                    button.style.marginLeft = "8px";
+                    // Move button to row2 if not already there
+                    if (button.parentNode !== row2) {
+                        row1.removeChild(button);
+                        row2.appendChild(button);
+                    }
                 } else {
                     customPromptInput.style.display = "none";
-                    button.style.marginLeft = "8px";
+                    // Move button to row1 if not already there
+                    if (button.parentNode !== row1) {
+                        row2.removeChild(button);
+                        row1.appendChild(button);
+                    }
                 }
             });
+            // Initial state: button in row1, custom prompt hidden
+            customPromptInput.style.display = "none";
+            if (button.parentNode !== row1) {
+                if (button.parentNode) button.parentNode.removeChild(button);
+                row1.appendChild(button);
+            }
 
             // Button click handler
             button.addEventListener("click", async function () {
