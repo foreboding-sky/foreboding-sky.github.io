@@ -34,8 +34,8 @@ function injectAIDescriptionControls() {
             const groupDiv = document.createElement("div");
             groupDiv.id = "ai-description-helper-group";
             groupDiv.style.display = "flex";
-            groupDiv.style.flexDirection = "row";
-            groupDiv.style.alignItems = "left";
+            groupDiv.style.flexDirection = "column";
+            groupDiv.style.alignItems = "stretch";
             groupDiv.style.marginTop = "8px";
 
             // Temporary create API key input
@@ -44,6 +44,7 @@ function injectAIDescriptionControls() {
             apiKeyInput.className = "form-control input-sm";
             apiKeyInput.placeholder = "OpenAI API Key";
             apiKeyInput.style.width = "100%";
+            apiKeyInput.style.flex = "1 1 0%";
 
             // Create dropdown
             const select = document.createElement("select");
@@ -53,6 +54,7 @@ function injectAIDescriptionControls() {
             select.style.width = "175px";
             select.style.minWidth = "175px";
             select.style.maxWidth = "175px";
+            select.style.flex = "none";
             for (const action of descriptionActions) {
                 const option = document.createElement("option");
                 option.value = action;
@@ -88,12 +90,16 @@ function injectAIDescriptionControls() {
             button.style.marginLeft = "8px";
             button.style.padding = "2px 10px";
             button.style.fontSize = "13px";
+            button.style.flex = "none";
 
             // Layout containers
             const row1 = document.createElement("div");
             row1.style.display = "flex";
             row1.style.flexDirection = "row";
             row1.style.alignItems = "center";
+            row1.style.width = "100%";
+            apiKeyInput.style.flex = "1 1 0%";
+            select.style.flex = "none";
             row1.appendChild(apiKeyInput);
             row1.appendChild(select);
 
@@ -101,6 +107,9 @@ function injectAIDescriptionControls() {
             row2.style.display = "flex";
             row2.style.flexDirection = "row";
             row2.style.alignItems = "center";
+            row2.style.width = "100%";
+            customPromptDiv.style.flex = "1 1 0%";
+            button.style.flex = "none";
             row2.appendChild(customPromptDiv);
             row2.appendChild(button);
 
