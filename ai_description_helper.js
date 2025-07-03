@@ -59,6 +59,24 @@ function injectAIDescriptionControls() {
                 option.textContent = action;
                 select.appendChild(option);
             }
+            // Add Custom prompt option
+            const customOption = document.createElement("option");
+            customOption.value = "Custom prompt";
+            customOption.textContent = "Custom prompt";
+            select.appendChild(customOption);
+
+            // Create custom prompt input (hidden by default)
+            const customPromptDiv = document.createElement("div");
+            customPromptDiv.style.display = "none";
+            customPromptDiv.style.flex = "1";
+            customPromptDiv.style.marginTop = "8px";
+            const customPromptInput = document.createElement("input");
+            customPromptInput.type = "text";
+            customPromptInput.id = "ai-custom-prompt";
+            customPromptInput.className = "form-control input-sm";
+            customPromptInput.placeholder = "Enter your custom prompt...";
+            customPromptInput.style.width = "100%";
+            customPromptDiv.appendChild(customPromptInput);
 
             // Create button 
             const button = document.createElement("button");
@@ -70,6 +88,32 @@ function injectAIDescriptionControls() {
             button.style.marginLeft = "8px";
             button.style.padding = "2px 10px";
             button.style.fontSize = "13px";
+
+            // Layout containers
+            const row1 = document.createElement("div");
+            row1.style.display = "flex";
+            row1.style.flexDirection = "row";
+            row1.style.alignItems = "center";
+            row1.appendChild(apiKeyInput);
+            row1.appendChild(select);
+
+            const row2 = document.createElement("div");
+            row2.style.display = "flex";
+            row2.style.flexDirection = "row";
+            row2.style.alignItems = "center";
+            row2.appendChild(customPromptDiv);
+            row2.appendChild(button);
+
+            // Show/hide custom prompt input and adjust layout
+            select.addEventListener("change", function () {
+                if (select.value === "Custom prompt") {
+                    customPromptDiv.style.display = "block";
+                    button.style.marginLeft = "8px";
+                } else {
+                    customPromptDiv.style.display = "none";
+                    button.style.marginLeft = "8px";
+                }
+            });
 
             // Button click handler
             button.addEventListener("click", async function () {
@@ -83,7 +127,14 @@ function injectAIDescriptionControls() {
                     if (!body) throw new Error("Could not find description editor.");
                     const descriptionText = body.innerText || body.textContent || "";
                     if (!descriptionText.trim()) throw new Error("Description is empty.");
-                    const newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined);
+                    let newDescription;
+                    if (selectedAction === "Custom prompt") {
+                        const customPrompt = customPromptInput.value.trim();
+                        if (!customPrompt) throw new Error("Custom prompt is empty.");
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined, customPrompt);
+                    } else {
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined);
+                    }
                     setDescriptionHtml(`<p>${newDescription.replace(/\n/g, "<br>")}</p>`);
                 } catch (err) {
                     alert("AI Description Error: " + err.message);
@@ -93,10 +144,10 @@ function injectAIDescriptionControls() {
                 }
             });
 
-            // Add controls to group
-            groupDiv.appendChild(apiKeyInput);
-            groupDiv.appendChild(select);
-            groupDiv.appendChild(button);
+            // Add controls to group (2 rows)
+            groupDiv.appendChild(row1);
+            groupDiv.appendChild(row2);
+
             // Insert after the first control-group
             if (controlGroup.nextSibling) {
                 controlGroup.parentNode.insertBefore(groupDiv, controlGroup.nextSibling);
@@ -119,7 +170,7 @@ function injectAIDescriptionControls() {
     }, 2000);
 }
 
-async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey) {
+async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, customPrompt) {
     if (!openAIApiKey) throw new Error("OpenAI API key is required.");
     const apiKey = openAIApiKey;
     const prompts = {
@@ -129,7 +180,12 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey) {
         "Make shorter": `Make this line shorter: ${itemDescription}`,
         "Simplify writing": `Simplify writing for this line: ${itemDescription}`
     };
-    const prompt = prompts[action] || prompts["Improve writing"];
+    let prompt;
+    if (action === "Custom prompt" && customPrompt) {
+        prompt = customPrompt;
+    } else {
+        prompt = prompts[action] || prompts["Improve writing"];
+    }
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
