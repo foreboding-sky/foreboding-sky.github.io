@@ -67,7 +67,6 @@ function injectAIDescriptionControls() {
             // Custom prompt input (hidden by default)
             const customPromptInput = document.createElement("input");
             customPromptInput.style.display = "none";
-            customPromptInput.style.marginTop = "8px";
             customPromptInput.type = "text";
             customPromptInput.id = "ai-custom-prompt";
             customPromptInput.className = "form-control input-sm";
@@ -81,7 +80,6 @@ function injectAIDescriptionControls() {
             button.type = "button";
             button.textContent = "AI Rewrite";
             button.style.width = "auto";
-            button.style.marginTop = "8px";
             button.style.marginLeft = "8px";
             button.style.padding = "2px 10px";
             button.style.fontSize = "13px";
@@ -104,10 +102,10 @@ function injectAIDescriptionControls() {
             row2.style.flexDirection = "row";
             row2.style.alignItems = "center";
             row2.style.width = "100%";
+            row2.style.marginTop = "8px";
             customPromptInput.style.flex = "1 1 0%";
             button.style.flex = "none";
             row2.appendChild(customPromptInput);
-            // button will be moved here dynamically if needed
 
             // Make the groupDiv a column flexbox so rows stack vertically
             groupDiv.style.display = "flex";
