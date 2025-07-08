@@ -107,7 +107,6 @@ function injectAIDescriptionControls() {
             button.style.flex = "none";
             row2.appendChild(customPromptInput);
 
-            // Make the groupDiv a column flexbox so rows stack vertically
             groupDiv.style.display = "flex";
             groupDiv.style.flexDirection = "column";
             groupDiv.style.alignItems = "stretch";
@@ -131,6 +130,7 @@ function injectAIDescriptionControls() {
                     }
                 }
             });
+
             // Initial state: button in row1, custom prompt hidden
             customPromptInput.style.display = "none";
             if (button.parentNode !== row1) {
@@ -180,7 +180,6 @@ function injectAIDescriptionControls() {
         }
     }
 
-    // Try once in case already present
     tryInject();
 
     // Observe for dynamic view changes (only in legacy-windows-container)
@@ -256,5 +255,12 @@ function getDescriptionHtml() {
 // Sets the description as HTML in the editor.
 function setDescriptionHtml(html) {
     const body = getDescriptionEditorIframeBody();
-    if (body) body.innerHTML = html;
+    if (body) {
+        body.innerHTML = html;
+        // Focus to make component active
+        body.focus();
+        // Dispatch input event to notify the editor of the text change
+        const event = new Event('input', { bubbles: true });
+        body.dispatchEvent(event);
+    }
 }
