@@ -193,10 +193,11 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, cu
         macroService.Run({
             applicationName: "PluggableTestAndrii",
             macroName: "AIDescriptionHelper",
-            prompt
+            prompt: prompt
         }, function (result) {
             if (result && result.result && !result.result.IsError && result.result.description) {
-                resolve(result.result.description.trim());
+                console.log(result.result);
+                resolve(result.result.response.trim());
             } else if (result && result.result && result.result.IsError) {
                 reject(new Error(result.result.ErrorMessage || "AIDescriptionHelper macro error"));
             } else if (result && result.error) {
