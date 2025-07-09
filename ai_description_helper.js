@@ -195,8 +195,8 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, cu
             macroName: "AIDescriptionHelper",
             prompt: prompt
         }, function (result) {
-            if (result && result.result && !result.result.IsError && result.result.description) {
-                console.log(result.result);
+            console.log(result.result);
+            if (result && result.result && !result.result.IsError) {
                 resolve(result.result.response.trim());
             } else if (result && result.result && result.result.IsError) {
                 reject(new Error(result.result.ErrorMessage || "AIDescriptionHelper macro error"));
