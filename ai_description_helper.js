@@ -39,20 +39,10 @@ function injectAIDescriptionControls() {
             groupDiv.style.alignItems = "stretch";
             groupDiv.style.marginTop = "8px";
 
-            // API key input
-            const apiKeyInput = document.createElement("input");
-            apiKeyInput.id = "ai-openai-key";
-            apiKeyInput.className = "form-control input-sm";
-            apiKeyInput.placeholder = "OpenAI API Key";
-            apiKeyInput.style.width = "100%";
-            apiKeyInput.style.height = "28px";
-            apiKeyInput.style.flex = "1 1 0%";
-
             // Dropdown
             const select = document.createElement("select");
             select.id = "ai-description-action";
             select.className = "form-control input-sm";
-            select.style.marginLeft = "8px";
             select.style.width = "175px";
             select.style.minWidth = "175px";
             select.style.maxWidth = "175px";
@@ -85,63 +75,42 @@ function injectAIDescriptionControls() {
             button.style.fontSize = "13px";
             button.style.flex = "none";
 
-            // Layout containers
-            const row1 = document.createElement("div");
-            row1.style.display = "flex";
-            row1.style.flexDirection = "row";
-            row1.style.alignItems = "center";
-            row1.style.width = "100%";
-            apiKeyInput.style.flex = "1 1 0%";
+            // layout
+            const row = document.createElement("div");
+            row.style.display = "flex";
+            row.style.flexDirection = "row";
+            row.style.alignItems = "center";
+            row.style.width = "100%";
             select.style.flex = "none";
-            row1.appendChild(apiKeyInput);
-            row1.appendChild(select);
-            row1.appendChild(button); // Button is in row1 by default
-
-            const row2 = document.createElement("div");
-            row2.style.display = "flex";
-            row2.style.flexDirection = "row";
-            row2.style.alignItems = "center";
-            row2.style.width = "100%";
-            row2.style.marginTop = "8px";
             customPromptInput.style.flex = "1 1 0%";
             button.style.flex = "none";
-            row2.appendChild(customPromptInput);
-
-            groupDiv.style.display = "flex";
-            groupDiv.style.flexDirection = "column";
-            groupDiv.style.alignItems = "stretch";
-            groupDiv.style.marginTop = "8px";
+            row.appendChild(select);
+            row.appendChild(button);
 
             // Show/hide custom prompt input and move button
             select.addEventListener("change", function () {
                 if (select.value === "Custom prompt") {
+                    if (!row.contains(customPromptInput)) {
+                        row.insertBefore(customPromptInput, button);
+                    }
                     customPromptInput.style.display = "block";
-                    // Move button to row2 if not already there
-                    if (button.parentNode !== row2) {
-                        row1.removeChild(button);
-                        row2.appendChild(button);
-                    }
                 } else {
-                    customPromptInput.style.display = "none";
-                    // Move button to row1 if not already there
-                    if (button.parentNode !== row1) {
-                        row2.removeChild(button);
-                        row1.appendChild(button);
+                    if (row.contains(customPromptInput)) {
+                        row.removeChild(customPromptInput);
                     }
+                    customPromptInput.style.display = "none";
                 }
             });
 
-            // Initial state: button in row1, custom prompt hidden
+            // Initial state: button in row, custom prompt hidden
             customPromptInput.style.display = "none";
-            if (button.parentNode !== row1) {
-                if (button.parentNode) button.parentNode.removeChild(button);
-                row1.appendChild(button);
+            if (row.contains(customPromptInput)) {
+                row.removeChild(customPromptInput);
             }
 
             // Button click handler
             button.addEventListener("click", async function () {
                 const selectedAction = select.value;
-                const userApiKey = apiKeyInput.value.trim();
                 const originalHtml = button.innerHTML;
                 button.disabled = true;
                 button.innerHTML = '<span class="fa fa-spinner fa-spin"></span> AI Rewrite';
@@ -154,9 +123,9 @@ function injectAIDescriptionControls() {
                     if (selectedAction === "Custom prompt") {
                         const customPrompt = customPromptInput.value.trim();
                         if (!customPrompt) throw new Error("Custom prompt is empty.");
-                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined, customPrompt);
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined, customPrompt);
                     } else {
-                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, userApiKey || undefined);
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined);
                     }
                     setDescriptionHtml(`<p>${newDescription.replace(/\n/g, "<br>")}</p>`);
                 } catch (err) {
@@ -167,9 +136,8 @@ function injectAIDescriptionControls() {
                 }
             });
 
-            // Add controls to group (2 rows)
-            groupDiv.appendChild(row1);
-            groupDiv.appendChild(row2);
+            // Add controls to group (single row)
+            groupDiv.appendChild(row);
 
             // Insert after the first control-group
             if (controlGroup.nextSibling) {
@@ -193,8 +161,9 @@ function injectAIDescriptionControls() {
 }
 
 async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, customPrompt) {
-    if (!openAIApiKey) throw new Error("OpenAI API key is required.");
-    const apiKey = openAIApiKey;
+    if (!window.Services || !window.Services.MacroService) {
+        throw new Error("MacroService is not available in the global scope.");
+    }
     const prompts = {
         "Improve writing": `Improve writing for this line: ${itemDescription}`,
         "Fix spelling and grammar": `Fix spelling and grammar for this line: ${itemDescription}`,
@@ -208,27 +177,24 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, cu
     } else {
         prompt = prompts[action] || prompts["Improve writing"];
     }
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-            model: "gpt-3.5-turbo-0125", // o3-mini model
-            messages: [
-                { role: "system", content: "You are a helpful assistant. Only return the modified description, with no extra explanation or text." },
-                { role: "user", content: prompt }
-            ],
-            max_tokens: 256,
-            temperature: 0.7
-        })
+    return new Promise((resolve, reject) => {
+        const macroService = new window.Services.MacroService();
+        macroService.Run({
+            applicationName: "PluggableTestAndrii",
+            macroName: "AIDescriptionHelper",
+            prompt
+        }, function (result) {
+            if (result && result.result && !result.result.IsError && result.result.description) {
+                resolve(result.result.description.trim());
+            } else if (result && result.result && result.result.IsError) {
+                reject(new Error(result.result.ErrorMessage || "AIDescriptionHelper macro error"));
+            } else if (result && result.error) {
+                reject(new Error(result.error));
+            } else {
+                reject(new Error("Unknown error from AIDescriptionHelper macro"));
+            }
+        });
     });
-    if (!response.ok) {
-        throw new Error(`OpenAI API error: ${response.status} ${await response.text()}`);
-    }
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
 }
 
 // Finds the <body> element inside the description editor's iframe.
