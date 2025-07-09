@@ -60,6 +60,7 @@ function injectAIDescriptionControls() {
             customPromptInput.type = "text";
             customPromptInput.id = "ai-custom-prompt";
             customPromptInput.className = "form-control input-sm";
+            customPromptInput.style.marginLeft = "8px";
             customPromptInput.placeholder = "Enter your custom prompt...";
             customPromptInput.style.width = "100%";
 
@@ -120,12 +121,20 @@ function injectAIDescriptionControls() {
                     const descriptionText = body.innerText || body.textContent || "";
                     if (!descriptionText.trim()) throw new Error("Description is empty.");
                     let newDescription;
+                    // Try to get $scope from Angular context if available
+                    let $scope = null;
+                    try {
+                        const view = document.querySelector("div[ng-controller='DescriptionEditorView']");
+                        if (view && window.angular && window.angular.element) {
+                            $scope = window.angular.element(view).scope();
+                        }
+                    } catch (e) { $scope = null; }
                     if (selectedAction === "Custom prompt") {
                         const customPrompt = customPromptInput.value.trim();
                         if (!customPrompt) throw new Error("Custom prompt is empty.");
-                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined, customPrompt);
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined, customPrompt, $scope);
                     } else {
-                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined);
+                        newDescription = await modifyDescriptionWithAI(descriptionText, selectedAction, undefined, undefined, $scope);
                     }
                     setDescriptionHtml(`<p>${newDescription.replace(/\n/g, "<br>")}</p>`);
                 } catch (err) {
@@ -160,7 +169,8 @@ function injectAIDescriptionControls() {
     }, 2000);
 }
 
-async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, customPrompt) {
+// Accept vmOrScope as an optional last argument
+async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, customPrompt, vmOrScope) {
     if (!window.Services || !window.Services.MacroService) {
         throw new Error("MacroService is not available in the global scope.");
     }
@@ -178,7 +188,8 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, cu
         prompt = prompts[action] || prompts["Improve writing"];
     }
     return new Promise((resolve, reject) => {
-        const macroService = new window.Services.MacroService();
+        // Use vmOrScope if provided, otherwise undefined
+        const macroService = new window.Services.MacroService(vmOrScope);
         macroService.Run({
             applicationName: "PluggableTestAndrii",
             macroName: "AIDescriptionHelper",
