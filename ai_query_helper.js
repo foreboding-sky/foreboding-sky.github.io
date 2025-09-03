@@ -19,48 +19,81 @@ function injectAIQueryControls() {
     function isCustomScriptSelected() {
         // Method 3: dropdown selected text equals "<< Custom Script >>"
         const span = document.querySelector('span[ng-bind-html="$ctrl.selectedItemText"]');
-        if (!span) return false;
+        console.log("AI Query Helper - Checking dropdown span:", span);
+        if (!span) {
+            console.log("AI Query Helper - No dropdown span found");
+            return false;
+        }
         const text = (span.textContent || span.innerText || "").trim();
-        return text === "<< Custom Script >>";
+        console.log("AI Query Helper - Dropdown text:", text);
+        const isCustom = text === "<< Custom Script >>";
+        console.log("AI Query Helper - Is custom script selected:", isCustom);
+        return isCustom;
     }
 
     function isCustomScriptPresent() {
+        console.log("AI Query Helper - Checking if custom script is present...");
+
         // Method 1: label says "Custom script:" exactly
         const controlGroups = Array.from(document.querySelectorAll("div.control-group"));
+        console.log("AI Query Helper - Found control groups:", controlGroups.length);
+
         const hasLabel = controlGroups.some(group => {
             const label = group.querySelector("label.control-label, label.control-label.capitalize");
             if (!label) return false;
             const text = normalize(label.textContent);
+            console.log("AI Query Helper - Label text:", text);
             return text === "custom script:";
         });
+        console.log("AI Query Helper - Has custom script label:", hasLabel);
 
         // Method 2: stable container for the ace editor
-        const hasQueryScript = !!document.querySelector("div.query-script.ace_editor");
+        const queryScript = document.querySelector("div.query-script.ace_editor");
+        const hasQueryScript = !!queryScript;
+        console.log("AI Query Helper - Found query-script editor:", hasQueryScript, queryScript);
+
+        // Check dropdown selection
+        const isSelected = isCustomScriptSelected();
 
         // Only inject when selection indicates custom script (defensive)
-        return (hasLabel || hasQueryScript) && isCustomScriptSelected();
+        const shouldInject = (hasLabel || hasQueryScript) && isSelected;
+        console.log("AI Query Helper - Should inject:", shouldInject, "(hasLabel:", hasLabel, "hasQueryScript:", hasQueryScript, "isSelected:", isSelected, ")");
+        return shouldInject;
     }
 
     function findInjectionPoint() {
+        console.log("AI Query Helper - Finding injection point...");
+
         // Prefer inserting after the control-group that has the "Custom script:" label
         const groups = Array.from(document.querySelectorAll("div.control-group"));
+        console.log("AI Query Helper - Checking", groups.length, "control groups for injection point");
+
         for (const group of groups) {
             const label = group.querySelector("label.control-label, label.control-label.capitalize");
             if (!label) continue;
             const text = normalize(label.textContent);
+            console.log("AI Query Helper - Checking label text:", text);
             if (text === "custom script:") {
+                console.log("AI Query Helper - Found custom script control group, will inject after it");
                 return { parent: group.parentNode, refNode: group.nextSibling };
             }
         }
+
         // Fallback: insert right before the custom script editor if present
         const scriptContainer = document.querySelector("div.query-script.ace_editor");
+        console.log("AI Query Helper - Fallback: checking for query-script editor:", scriptContainer);
         if (scriptContainer && scriptContainer.parentNode) {
+            console.log("AI Query Helper - Found query-script editor, will inject before it");
             return { parent: scriptContainer.parentNode, refNode: scriptContainer };
         }
+
+        console.log("AI Query Helper - No injection point found");
         return null;
     }
 
     function buildControls() {
+        console.log("AI Query Helper - Building controls...");
+
         // Container
         const groupDiv = document.createElement("div");
         groupDiv.id = "ai-query-helper-group";
@@ -104,39 +137,67 @@ function injectAIQueryControls() {
         row.appendChild(input);
         row.appendChild(button);
         groupDiv.appendChild(row);
+
+        console.log("AI Query Helper - Controls built successfully");
         return groupDiv;
     }
 
     function tryInject() {
+        console.log("AI Query Helper - tryInject called");
+
         const existing = document.getElementById("ai-query-helper-group");
+        console.log("AI Query Helper - Existing controls found:", !!existing);
+
         // Only keep controls if present and selected is Custom Script
         if (!isCustomScriptPresent()) {
-            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+            console.log("AI Query Helper - Custom script not present, removing existing controls if any");
+            if (existing && existing.parentNode) {
+                existing.parentNode.removeChild(existing);
+                console.log("AI Query Helper - Removed existing controls");
+            }
             return;
         }
-        if (existing) return;
 
+        if (existing) {
+            console.log("AI Query Helper - Controls already exist, skipping injection");
+            return;
+        }
+
+        console.log("AI Query Helper - Attempting to inject controls...");
         const insertion = findInjectionPoint();
-        if (!insertion) return;
+        if (!insertion) {
+            console.log("AI Query Helper - No injection point found, aborting");
+            return;
+        }
 
         const controls = buildControls();
         if (insertion.refNode) {
             insertion.parent.insertBefore(controls, insertion.refNode);
+            console.log("AI Query Helper - Controls injected before reference node");
         } else {
             insertion.parent.appendChild(controls);
+            console.log("AI Query Helper - Controls appended to parent");
         }
     }
 
     // Attempt immediate injection
+    console.log("AI Query Helper - Starting injection process...");
     tryInject();
 
     // Observe for dynamic content changes (like tab switches or parameter changes)
     setTimeout(function () {
+        console.log("AI Query Helper - Setting up mutation observer...");
         const target = document.querySelector(".legacy-windows-container") || document.body;
-        if (!target) return;
-        const observer = new MutationObserver(function () {
+        console.log("AI Query Helper - Observer target:", target);
+        if (!target) {
+            console.log("AI Query Helper - No target found for observer");
+            return;
+        }
+        const observer = new MutationObserver(function (mutations) {
+            console.log("AI Query Helper - DOM mutation detected, checking for injection...");
             tryInject();
         });
         observer.observe(target, { childList: true, subtree: true, characterData: true, attributes: true });
+        console.log("AI Query Helper - Mutation observer started");
     }, 500);
 }
