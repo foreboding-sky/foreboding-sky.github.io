@@ -12,37 +12,50 @@ if (document.readyState === "loading") {
 }
 
 function injectAIQueryControls() {
+    function normalize(text) {
+        return (text || "").replace(/\s+/g, " ").trim().toLowerCase();
+    }
+
+    function isCustomScriptSelected() {
+        // Method 3: dropdown selected text equals "<< Custom Script >>"
+        const span = document.querySelector('span[ng-bind-html="$ctrl.selectedItemText"]');
+        if (!span) return false;
+        const text = (span.textContent || span.innerText || "").trim();
+        return text === "<< Custom Script >>";
+    }
+
     function isCustomScriptPresent() {
-        // Method 1: label says "Custom script:"
+        // Method 1: label says "Custom script:" exactly
         const controlGroups = Array.from(document.querySelectorAll("div.control-group"));
         const hasLabel = controlGroups.some(group => {
-            const label = group.querySelector("label.control-label");
+            const label = group.querySelector("label.control-label, label.control-label.capitalize");
             if (!label) return false;
-            const text = (label.textContent || "").trim().toLowerCase();
-            return text.startsWith("custom script:");
+            const text = normalize(label.textContent);
+            return text === "custom script:";
         });
 
-        // Method 2: element with lw-tst="CustomScript"
-        const hasAce = !!document.querySelector('[lw-tst="CustomScript"]');
+        // Method 2: stable container for the ace editor
+        const hasQueryScript = !!document.querySelector("div.query-script.ace_editor");
 
-        return hasLabel || hasAce;
+        // Only inject when selection indicates custom script (defensive)
+        return (hasLabel || hasQueryScript) && isCustomScriptSelected();
     }
 
     function findInjectionPoint() {
         // Prefer inserting after the control-group that has the "Custom script:" label
         const groups = Array.from(document.querySelectorAll("div.control-group"));
         for (const group of groups) {
-            const label = group.querySelector("label.control-label");
+            const label = group.querySelector("label.control-label, label.control-label.capitalize");
             if (!label) continue;
-            const text = (label.textContent || "").trim().toLowerCase();
-            if (text.startsWith("custom script:")) {
+            const text = normalize(label.textContent);
+            if (text === "custom script:") {
                 return { parent: group.parentNode, refNode: group.nextSibling };
             }
         }
         // Fallback: insert right before the custom script editor if present
-        const aceContainer = document.querySelector('[lw-tst="CustomScript"]');
-        if (aceContainer && aceContainer.parentNode) {
-            return { parent: aceContainer.parentNode, refNode: aceContainer };
+        const scriptContainer = document.querySelector("div.query-script.ace_editor");
+        if (scriptContainer && scriptContainer.parentNode) {
+            return { parent: scriptContainer.parentNode, refNode: scriptContainer };
         }
         return null;
     }
@@ -95,9 +108,13 @@ function injectAIQueryControls() {
     }
 
     function tryInject() {
-        // Only inject if the custom script UI is present
-        if (!isCustomScriptPresent()) return;
-        if (document.getElementById("ai-query-helper-group")) return;
+        const existing = document.getElementById("ai-query-helper-group");
+        // Only keep controls if present and selected is Custom Script
+        if (!isCustomScriptPresent()) {
+            if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+            return;
+        }
+        if (existing) return;
 
         const insertion = findInjectionPoint();
         if (!insertion) return;
@@ -120,6 +137,6 @@ function injectAIQueryControls() {
         const observer = new MutationObserver(function () {
             tryInject();
         });
-        observer.observe(target, { childList: true, subtree: true });
+        observer.observe(target, { childList: true, subtree: true, characterData: true, attributes: true });
     }, 500);
 }
