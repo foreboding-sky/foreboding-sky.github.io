@@ -180,15 +180,20 @@ function injectAIQueryControls() {
         }
     }
 
-    // Attempt immediate injection
+    // Attempt immediate injection + a delayed pass to wait for Angular render
     console.log("AI Query Helper - Starting injection process...");
     tryInject();
+    setTimeout(function () {
+        console.log("AI Query Helper - Delayed tryInject after initial load");
+        tryInject();
+    }, 800);
 
     // Observe for dynamic content changes (like tab switches or parameter changes)
     setTimeout(function () {
         console.log("AI Query Helper - Setting up mutation observer...");
-        const target = document.querySelector(".legacy-windows-container") || document.body;
-        console.log("AI Query Helper - Observer target:", target);
+        const moduleRoot = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
+        const target = moduleRoot || document.querySelector(".legacy-windows-container") || document.body;
+        console.log("AI Query Helper - Observer target (moduleRoot preferred):", target);
         if (!target) {
             console.log("AI Query Helper - No target found for observer");
             return;
