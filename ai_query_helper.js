@@ -180,29 +180,69 @@ function injectAIQueryControls() {
         }
     }
 
-    // Attempt immediate injection + a delayed pass to wait for Angular render
+    // Attempt immediate injection + delayed passes to wait for Angular render
     console.log("AI Query Helper - Starting injection process...");
     tryInject();
     setTimeout(function () {
         console.log("AI Query Helper - Delayed tryInject after initial load");
         tryInject();
     }, 800);
+    window.addEventListener("load", function () {
+        console.log("AI Query Helper - Window load fired, trying injection");
+        tryInject();
+    });
 
     // Observe for dynamic content changes (like tab switches or parameter changes)
     setTimeout(function () {
-        console.log("AI Query Helper - Setting up mutation observer...");
-        const moduleRoot = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
-        const target = moduleRoot || document.querySelector(".legacy-windows-container") || document.body;
-        console.log("AI Query Helper - Observer target (moduleRoot preferred):", target);
-        if (!target) {
-            console.log("AI Query Helper - No target found for observer");
-            return;
-        }
-        const observer = new MutationObserver(function (mutations) {
-            console.log("AI Query Helper - DOM mutation detected, checking for injection...");
+        console.log("AI Query Helper - Setting up mutation observers...");
+        let moduleRoot = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
+        let observingModuleRoot = false;
+
+        // Always start with body observer as a catch-all
+        const bodyTarget = document.body;
+        const bodyObserver = new MutationObserver(function () {
+            // Try injecting on any DOM change
             tryInject();
+            // If module root appears later, swap to moduleRoot observer once
+            if (!observingModuleRoot) {
+                moduleRoot = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
+                if (moduleRoot) {
+                    console.log("AI Query Helper - Module root appeared; switching observer to module root");
+                    observingModuleRoot = true;
+                    const moduleObserver = new MutationObserver(function () {
+                        tryInject();
+                    });
+                    moduleObserver.observe(moduleRoot, { childList: true, subtree: true, characterData: true, attributes: true });
+                    // Keep body observer as a fallback, but it will be mostly idle
+                }
+            }
         });
-        observer.observe(target, { childList: true, subtree: true, characterData: true, attributes: true });
-        console.log("AI Query Helper - Mutation observer started");
+        if (bodyTarget) {
+            bodyObserver.observe(bodyTarget, { childList: true, subtree: true, characterData: true, attributes: true });
+            console.log("AI Query Helper - Body observer started");
+        }
+
+        // Proactive polling for module root for up to ~15s
+        let pollAttempts = 0;
+        const maxPollAttempts = 50; // ~15s at 300ms
+        const pollInterval = setInterval(function () {
+            if (observingModuleRoot) { clearInterval(pollInterval); return; }
+            moduleRoot = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
+            pollAttempts++;
+            console.log("AI Query Helper - Polling for module root (attempt", pollAttempts, "):", !!moduleRoot);
+            if (moduleRoot) {
+                console.log("AI Query Helper - Module root found by polling; running tryInject and continuing with observers");
+                tryInject();
+                observingModuleRoot = true;
+                const moduleObserver = new MutationObserver(function () {
+                    tryInject();
+                });
+                moduleObserver.observe(moduleRoot, { childList: true, subtree: true, characterData: true, attributes: true });
+                clearInterval(pollInterval);
+            } else if (pollAttempts >= maxPollAttempts) {
+                console.warn("AI Query Helper - Module root not found after polling; relying on body observer only");
+                clearInterval(pollInterval);
+            }
+        }, 300);
     }, 500);
 }
