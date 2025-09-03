@@ -191,7 +191,7 @@ async function modifyDescriptionWithAI(itemDescription, action, openAIApiKey, cu
         // Use vmOrScope if provided, otherwise undefined
         const macroService = new window.Services.MacroService(vmOrScope);
         macroService.Run({
-            applicationName: "PluggableTestAndrii",
+            applicationName: "AIDescriptionHelper",
             macroName: "AIDescriptionHelper",
             prompt: prompt
         }, function (result) {
