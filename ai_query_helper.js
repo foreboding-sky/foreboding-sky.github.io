@@ -213,7 +213,7 @@ async function runAiQueryWithMacro(prompt, vmOrScope) {
         macroName: "AiQueryHelper",
         prompt: prompt
     };
-    if (AI_QUERY_DEBUG) console.debug("AiQueryHelper request payload:", payload, "scope:", !!vmOrScope);
+    if (AI_QUERY_DEBUG) console.log("AiQueryHelper request payload:", payload, "scope:", !!vmOrScope);
     try {
         const primary = await runMacroOnce(payload, vmOrScope);
         return primary;
@@ -231,7 +231,7 @@ function runMacroOnce(payload, vmOrScope) {
     return new Promise((resolve, reject) => {
         const macroService = new window.Services.MacroService(vmOrScope);
         macroService.Run(payload, function (result) {
-            if (AI_QUERY_DEBUG) console.debug("AiQueryHelper raw result:", result);
+            if (AI_QUERY_DEBUG) console.log("AiQueryHelper raw result:", result);
             if (result && result.result && !result.result.IsError) {
                 const value = result.result.trim ? result.result.trim() : result.result;
                 resolve(value);
