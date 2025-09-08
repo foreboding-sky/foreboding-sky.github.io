@@ -110,6 +110,7 @@ function injectAIQueryControls() {
                 } catch (e) { $scope = null; }
                 const result = await runAiQueryWithMacro(prompt, $scope);
                 console.log(result);
+                setQueryScriptValue(result);
             } catch (err) {
                 const message = (err && err.message) ? err.message : String(err);
                 alert("AI Query Error: " + message);
@@ -193,6 +194,43 @@ function injectAIQueryControls() {
             }
         }, 1000);
     }, 500);
+}
+
+// Attempts to set the SQL into the Custom Script Ace editor
+function setQueryScriptValue(text) {
+    try {
+        const editor = getQueryAceEditor();
+        if (editor) {
+            editor.setValue(text || "", -1);
+            editor.focus();
+            return true;
+        }
+    } catch (_) { }
+    try {
+        const container = document.querySelector("div.query-script.ace_editor");
+        if (!container) return false;
+        const ta = container.querySelector("textarea.ace_text-input");
+        if (ta) {
+            ta.value = text || "";
+            ta.dispatchEvent(new Event("input", { bubbles: true }));
+            ta.dispatchEvent(new Event("change", { bubbles: true }));
+            ta.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
+            return true;
+        }
+        return false;
+    } catch (_) {
+        return false;
+    }
+}
+
+function getQueryAceEditor() {
+    try {
+        const container = document.querySelector("div.query-script.ace_editor");
+        if (!container || !window.ace || !window.ace.edit) return null;
+        return window.ace.edit(container);
+    } catch (_) {
+        return null;
+    }
 }
 
 // Minimal helper to call the AIQueryHelper macro and return its raw result string
