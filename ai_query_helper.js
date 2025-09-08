@@ -1,6 +1,7 @@
 "use strict";
 
 // Inject AI SQL helper when the "Custom script" editor is active
+const AI_QUERY_DEBUG = true;
 
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", injectAIQueryControls);
@@ -93,6 +94,11 @@ function injectAIQueryControls() {
                 alert("Please enter a prompt for SQL.");
                 return;
             }
+            if (!window.Services || !window.Services.MacroService) {
+                alert("MacroService is not available on this page.");
+                if (AI_QUERY_DEBUG) console.error("MacroService missing: window.Services=", window.Services);
+                return;
+            }
             const originalText = button.textContent;
             button.disabled = true;
             button.textContent = "Running...";
@@ -105,10 +111,16 @@ function injectAIQueryControls() {
                     }
                 } catch (e) { $scope = null; }
                 const result = await runAiQueryWithMacro(prompt, $scope);
-                console.log(result);
+                if (AI_QUERY_DEBUG) {
+                    console.log("AiQueryHelper response:", result);
+                } else {
+                    console.log(result);
+                }
             } catch (err) {
+                const message = formatErrorMessage(err);
                 console.error("AI Query Error:", err);
-                alert("AI Query Error: " + (err && err.message ? err.message : String(err)));
+                if (AI_QUERY_DEBUG) console.error("AI Query Error (stringified):", message);
+                alert("AI Query Error: " + message);
             } finally {
                 button.disabled = false;
                 button.textContent = originalText;
@@ -196,23 +208,56 @@ async function runAiQueryWithMacro(prompt, vmOrScope) {
     if (!window.Services || !window.Services.MacroService) {
         throw new Error("MacroService is not available in the global scope.");
     }
+    const payload = {
+        applicationName: "PluggableTestAndrii",
+        macroName: "AiQueryHelper",
+        prompt: prompt
+    };
+    if (AI_QUERY_DEBUG) console.debug("AiQueryHelper request payload:", payload, "scope:", !!vmOrScope);
+    try {
+        const primary = await runMacroOnce(payload, vmOrScope);
+        return primary;
+    } catch (err) {
+        // Retry once without scope in case scope binding causes issues
+        if (vmOrScope) {
+            if (AI_QUERY_DEBUG) console.warn("Primary call failed with scope; retrying without scope...", err);
+            return runMacroOnce(payload, undefined);
+        }
+        throw err;
+    }
+}
+
+function runMacroOnce(payload, vmOrScope) {
     return new Promise((resolve, reject) => {
         const macroService = new window.Services.MacroService(vmOrScope);
-        macroService.Run({
-            applicationName: "PluggableTestAndrii",
-            macroName: "AiQueryHelper",
-            prompt: prompt
-        }, function (result) {
-            // Mirror handling pattern used in ai_description_helper.js
+        macroService.Run(payload, function (result) {
+            if (AI_QUERY_DEBUG) console.debug("AiQueryHelper raw result:", result);
             if (result && result.result && !result.result.IsError) {
-                resolve(result.result.trim ? result.result.trim() : result.result);
+                const value = result.result.trim ? result.result.trim() : result.result;
+                resolve(value);
             } else if (result && result.result && result.result.IsError) {
-                reject(new Error(result.result.ErrorMessage || "AiQueryHelper macro error"));
+                const message = result.result.ErrorMessage || "AiQueryHelper macro error";
+                reject(new Error(message));
             } else if (result && result.error) {
-                reject(new Error(result.error));
+                reject(new Error(typeof result.error === "string" ? result.error : safeStringify(result.error)));
             } else {
                 reject(new Error("Unknown error from AiQueryHelper macro"));
             }
         });
     });
+}
+
+function formatErrorMessage(err) {
+    if (!err) return "Unknown error";
+    if (typeof err === "string") return err;
+    if (err.message) return err.message;
+    try { return safeStringify(err); } catch (_) { return String(err); }
+}
+
+function safeStringify(obj) {
+    try {
+        return JSON.stringify(obj, Object.getOwnPropertyNames(obj));
+    } catch (_) {
+        try { return JSON.stringify(obj); } catch (__) { return String(obj); }
+    }
 }
