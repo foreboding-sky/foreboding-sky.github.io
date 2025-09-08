@@ -1,9 +1,6 @@
 "use strict";
 
-// Inject an AI SQL helper only when a "Custom script" editor is present
-// Detection (both):
-// - Label text "Custom script:" or presence of `.query-script.ace_editor`
-// - Dropdown selected text equals `<< Custom Script >>`
+// Inject AI SQL helper when the "Custom script" editor is active
 
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", injectAIQueryControls);
@@ -69,17 +66,16 @@ function injectAIQueryControls() {
         row.style.alignItems = "center";
         row.style.width = "100%";
 
-        // Dummy input
+        // User input
         const input = document.createElement("input");
         input.type = "text";
-        input.id = "ai-query-dummy-input";
+        input.id = "ai-query-input";
         input.className = "form-control input-sm";
-        input.placeholder = "Enter prompt for SQL (dummy)";
+        input.placeholder = "Enter prompt for SQL";
         input.style.flex = "1 1 0%";
 
-        // Dummy button
         const button = document.createElement("button");
-        button.id = "ai-query-dummy-btn";
+        button.id = "ai-query-btn";
         button.className = "btn btn-primary btn-sm";
         button.type = "button";
         button.textContent = "AI Generate";
@@ -89,7 +85,34 @@ function injectAIQueryControls() {
         button.style.fontSize = "13px";
         button.style.flex = "none";
 
-        button.addEventListener("click", function () { });
+        button.addEventListener("click", async function () {
+            const inputEl = document.getElementById("ai-query-input");
+            const prompt = (inputEl && inputEl.value ? inputEl.value : "").trim();
+            if (!prompt) {
+                alert("Please enter a prompt for SQL.");
+                return;
+            }
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Running...";
+            try {
+                let $scope = null;
+                try {
+                    const root = document.querySelector('div.well.QueryData') || document.querySelector('[ng-controller="QueryDataModule"]');
+                    if (root && window.angular && window.angular.element) {
+                        $scope = window.angular.element(root).scope();
+                    }
+                } catch (e) { $scope = null; }
+                const result = await runAiQueryWithMacro(prompt, $scope);
+                console.log(result);
+            } catch (err) {
+                console.error("AI Query Error:", err);
+                alert("AI Query Error: " + (err && err.message ? err.message : String(err)));
+            } finally {
+                button.disabled = false;
+                button.textContent = originalText;
+            }
+        });
 
         row.appendChild(input);
         row.appendChild(button);
@@ -117,7 +140,6 @@ function injectAIQueryControls() {
         }
     }
 
-    // Attempt immediate injection + delayed passes to wait for Angular render
     tryInject();
     setTimeout(function () {
         tryInject();
@@ -126,7 +148,6 @@ function injectAIQueryControls() {
         tryInject();
     });
 
-    // Poll once per second for module root and observe it when present
     setTimeout(function () {
         let moduleObserver = null;
         let currentModuleRoot = null;
@@ -167,4 +188,30 @@ function injectAIQueryControls() {
             }
         }, 1000);
     }, 500);
+}
+
+// Minimal helper to call the AiQueryHelper macro and return its raw result string
+async function runAiQueryWithMacro(prompt, vmOrScope) {
+    if (!window.Services || !window.Services.MacroService) {
+        throw new Error("MacroService is not available in the global scope.");
+    }
+    return new Promise((resolve, reject) => {
+        const macroService = new window.Services.MacroService(vmOrScope);
+        macroService.Run({
+            applicationName: "PluggableTestAndrii",
+            macroName: "AiQueryHelper",
+            prompt: prompt
+        }, function (result) {
+            // Mirror handling pattern used in ai_description_helper.js
+            if (result && result.result && !result.result.IsError) {
+                resolve(result.result.trim ? result.result.trim() : result.result);
+            } else if (result && result.result && result.result.IsError) {
+                reject(new Error(result.result.ErrorMessage || "AiQueryHelper macro error"));
+            } else if (result && result.error) {
+                reject(new Error(result.error));
+            } else {
+                reject(new Error("Unknown error from AiQueryHelper macro"));
+            }
+        });
+    });
 }
