@@ -71,6 +71,7 @@ function injectAIQueryControls() {
         input.type = "text";
         input.id = "ai-query-input";
         input.className = "form-control input-sm";
+        input.style.marginLeft = "180px";
         input.placeholder = "Enter prompt for SQL";
         input.style.flex = "1 1 0%";
 
