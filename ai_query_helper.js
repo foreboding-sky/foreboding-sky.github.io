@@ -112,7 +112,7 @@ function injectAIQueryControls() {
                 } catch (e) { $scope = null; }
                 const result = await runAiQueryWithMacro(prompt, $scope);
                 if (AI_QUERY_DEBUG) {
-                    console.log("AiQueryHelper response:", result);
+                    console.log("AIQueryHelper response:", result);
                 } else {
                     console.log(result);
                 }
@@ -203,17 +203,17 @@ function injectAIQueryControls() {
     }, 500);
 }
 
-// Minimal helper to call the AiQueryHelper macro and return its raw result string
+// Minimal helper to call the AIQueryHelper macro and return its raw result string
 async function runAiQueryWithMacro(prompt, vmOrScope) {
     if (!window.Services || !window.Services.MacroService) {
         throw new Error("MacroService is not available in the global scope.");
     }
     const payload = {
-        applicationName: "PluggableTestAndrii",
-        macroName: "AiQueryHelper",
+        applicationName: "PlugDevApp",
+        macroName: "AIQueryHelper",
         prompt: prompt
     };
-    if (AI_QUERY_DEBUG) console.log("AiQueryHelper request payload:", payload, "scope:", !!vmOrScope);
+    if (AI_QUERY_DEBUG) console.log("AIQueryHelper request payload:", payload, "scope:", !!vmOrScope);
     try {
         const primary = await runMacroOnce(payload, vmOrScope);
         return primary;
@@ -231,17 +231,17 @@ function runMacroOnce(payload, vmOrScope) {
     return new Promise((resolve, reject) => {
         const macroService = new window.Services.MacroService(vmOrScope);
         macroService.Run(payload, function (result) {
-            if (AI_QUERY_DEBUG) console.log("AiQueryHelper raw result:", result);
+            if (AI_QUERY_DEBUG) console.log("AIQueryHelper raw result:", result);
             if (result && result.result && !result.result.IsError) {
                 const value = result.result.trim ? result.result.trim() : result.result;
                 resolve(value);
             } else if (result && result.result && result.result.IsError) {
-                const message = result.result.ErrorMessage || "AiQueryHelper macro error";
+                const message = result.result.ErrorMessage || "AIQueryHelper macro error";
                 reject(new Error(message));
             } else if (result && result.error) {
                 reject(new Error(typeof result.error === "string" ? result.error : safeStringify(result.error)));
             } else {
-                reject(new Error("Unknown error from AiQueryHelper macro"));
+                reject(new Error("Unknown error from AIQueryHelper macro"));
             }
         });
     });
